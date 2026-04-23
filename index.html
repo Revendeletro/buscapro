@@ -1259,7 +1259,7 @@ td{padding:10px 12px;vertical-align:middle;white-space:nowrap;}
 
         <div class="acc-section">
           <div class="acc-section-title">📤 Atualizar Base de Dados</div>
-          <div class="acc-section-sub">Faça upload de uma planilha XLSX para substituir todos os dados do buscador.</div>
+          <div class="acc-section-sub">Faça upload de uma planilha XLSX para <b>adicionar ao histórico</b>. Os dados existentes são mantidos e entradas com mais de 30 dias são removidas automaticamente.</div>
           <div class="drop-zone" id="dropZone"
             ondragover="event.preventDefault();this.classList.add('drag')"
             ondragleave="this.classList.remove('drag')"
@@ -1994,9 +1994,11 @@ function renderTable(){
 
     const borderAccent = rel<0.2 ? 'var(--green)' : rel>0.8 ? '#f87171' : 'var(--surface-3)';
 
-    // Mobile: só tipo e região nos badges (sem storage/cor duplicados)
+    // Mobile: tipo, storage, cor e região nos badges
     const mobileAttrs = [];
     if(d.t) mobileAttrs.push(`<span class="badge ${tipoCls}">${d.t}</span>`);
+    if(d.s) mobileAttrs.push(`<span class="mobile-attr"><span class="mobile-attr-label">Cap.</span>${d.s}</span>`);
+    if(d.c) mobileAttrs.push(`<span class="mobile-attr">${colorDot(d.c)}<span class="color-label">${d.c}</span></span>`);
     if(d.r) mobileAttrs.push(`<span class="mobile-attr"><span class="mobile-attr-label">Região</span>${d.r}</span>`);
 
     // Botão WA verde — substitui o ícone azul no mobile
@@ -2021,7 +2023,7 @@ function renderTable(){
         </div>
       </td>
       <td>
-        <div class="sup-name">${d.w?`<a href="${waHref}" target="_blank" class="sup-name-link" onclick="event.stopPropagation()" title="Clique para chamar no WhatsApp">${d.f}</a>`:d.f}<span class="sup-icons">${desktopSupIcons}</span></div>
+        <div class="sup-name">${d.w?`<a href="${waHref}" target="_blank" class="sup-name-link" onclick="event.stopPropagation()" title="Clique para chamar no WhatsApp">${d.f}</a><a href="${waHref}" target="_blank" class="sup-icon sup-icon-wa" onclick="event.stopPropagation()" data-tip="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.094.541 4.065 1.487 5.782L.057 23.026a.75.75 0 0 0 .917.917l5.244-1.43A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.713 9.713 0 0 1-4.908-1.327l-.352-.208-3.645.994.993-3.535-.228-.364A9.72 9.72 0 0 1 2.25 12c0-5.376 4.374-9.75 9.75-9.75S21.75 6.624 21.75 12 17.376 21.75 12 21.75z"/></svg></a>`:d.f}<span class="sup-icons">${desktopSupIcons}</span></div>
         <div class="sup-loc">${d.l||'—'}</div>
         <div class="mobile-attrs">${mobileAttrs.join('')}</div>
         ${waBtnMobile}
@@ -2278,12 +2280,42 @@ function processXLSX(file){
           date:hm.date?String(r[hm.date]||'').trim():'',
         })).filter(d=>d.p&&d.pr>0);
         if(!newData.length) throw new Error('Nenhum registro válido encontrado.');
-        ALL_DATA=[...newData];filtered=[...ALL_DATA];
-        populateFilters();applyFilters();
-        bar.style.width='100%';progText.textContent='Concluído!';
+
+        // ── Merge com histórico: mantém últimos 30 dias ──
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 30);
+        const cutoffStr = cutoff.toISOString().slice(0,10);
+
+        function parseDate(d) {
+          if(!d) return '';
+          const m = String(d).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+          if(m) return `${m[3]}-${m[2]}-${m[1]}`;
+          if(/^\d{4}-\d{2}-\d{2}$/.test(String(d))) return String(d);
+          return '';
+        }
+
+        newData.forEach(d => { d.date = parseDate(d.date) || new Date().toISOString().slice(0,10); });
+
+        const existingValid = ALL_DATA.filter(d => {
+          const dt = parseDate(d.date);
+          return dt >= cutoffStr;
+        });
+
+        const makeKey = d => `${d.p}|${d.f}|${d.s}|${d.c}|${d.date}`;
+        const existingKeys = new Set(existingValid.map(makeKey));
+        const addedData = newData.filter(d => !existingKeys.has(makeKey(d)));
+        const skipped = newData.length - addedData.length;
+
+        ALL_DATA = [...existingValid, ...addedData];
+        filtered = [...ALL_DATA];
+        populateFilters(); applyFilters();
+        bar.style.width='100%'; progText.textContent='Concluído!';
         setTimeout(()=>prog.style.display='none',700);
-        showResult('success',`✅ ${newData.length} registros importados com sucesso!`);
-        showToast(`${newData.length} produtos importados!`,'success');
+        let msg = `✅ ${addedData.length} registros novos adicionados ao histórico.`;
+        if(skipped > 0) msg += ` (${skipped} duplicatas ignoradas)`;
+        msg += ` Total: ${ALL_DATA.length} registros dos últimos 30 dias.`;
+        showResult('success', msg);
+        showToast(`+${addedData.length} novos · ${ALL_DATA.length} no histórico`, 'success');
         saveToFirebase();
       }catch(err){prog.style.display='none';showResult('error','❌ '+err.message);showToast('Erro ao importar','error');}
     },300);
@@ -2347,7 +2379,8 @@ function initFirebase() {
     fbRef.on('value', snap => {
       const data = snap.val();
       if (data && Array.isArray(data) && data.length > 0) {
-        ALL_DATA = data;
+        // Aplica purge de 30 dias ao carregar do Firebase
+        ALL_DATA = purge30Days(data);
         filtered = [...ALL_DATA];
         populateFilters();
         applyFilters();
@@ -2356,6 +2389,7 @@ function initFirebase() {
       } else {
         // Primeira vez: salva os dados iniciais no Firebase
         if (!fbReady) {
+          ALL_DATA = purge30Days(ALL_DATA);
           fbRef.set(ALL_DATA);
           fbReady = true;
         }
@@ -2372,12 +2406,27 @@ function initFirebase() {
   }
 }
 
-// Salva no Firebase após importar planilha
+// Purga registros > 30 dias do array passado e retorna o resultado limpo
+function purge30Days(data) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = cutoff.toISOString().slice(0,10);
+  function parseDate(d) {
+    if(!d) return '';
+    const m = String(d).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if(m) return `${m[3]}-${m[2]}-${m[1]}`;
+    if(/^\d{4}-\d{2}-\d{2}$/.test(String(d))) return String(d);
+    return '';
+  }
+  return data.filter(d => { const dt = parseDate(d.date); return !dt || dt >= cutoffStr; });
+}
+
+// Salva no Firebase após importar planilha (histórico acumulado)
 function saveToFirebase() {
   if (!fbRef) return;
   setSyncStatus('syncing', 'Salvando...');
   fbRef.set(ALL_DATA)
-    .then(() => setSyncStatus('online', 'Salvo · ' + ALL_DATA.length + ' produtos'))
+    .then(() => setSyncStatus('online', 'Online · ' + ALL_DATA.length + ' produtos'))
     .catch(e => { console.error(e); setSyncStatus('error', 'Erro ao salvar'); });
 }
 
