@@ -109,9 +109,187 @@ body.theme-light .plan-card {
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;color:var(--text);font-size:14px;line-height:1.5;}
+
+/* ── SPLASH LOGIN SCREEN ── */
+#splashLogin {
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+  animation:fadeIn .3s ease;
+}
+#splashLogin.hiding {
+  animation:fadeOut .4s ease forwards;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0;pointer-events:none}}
+
+.splash-bg-glow {
+  position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 40% at 50% 0%, rgba(224,28,59,.12) 0%, transparent 70%);
+}
+.splash-card {
+  position:relative;
+  background:var(--surface);
+  border:1px solid var(--border-2);
+  border-radius:20px;
+  padding:44px 40px 36px;
+  width:100%;max-width:400px;
+  box-shadow:var(--shadow-lg);
+  animation:slideUp .35s cubic-bezier(.22,1,.36,1);
+}
+@keyframes slideUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+.splash-logo {
+  display:flex;align-items:center;gap:9px;justify-content:center;
+  margin-bottom:28px;
+}
+.splash-logo-text {
+  font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.5px;
+}
+.splash-logo-dot {
+  width:8px;height:8px;border-radius:50%;background:var(--red);
+  box-shadow:0 0 10px rgba(224,28,59,.6);flex-shrink:0;
+}
+.splash-title {
+  font-family:'Syne',sans-serif;font-size:20px;font-weight:800;
+  text-align:center;margin-bottom:6px;
+}
+.splash-sub {
+  font-size:13px;color:var(--text-2);text-align:center;
+  margin-bottom:28px;line-height:1.6;
+}
+.splash-field {
+  margin-bottom:14px;
+}
+.splash-label {
+  display:block;font-size:11px;font-weight:700;color:var(--text-3);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;
+}
+.splash-input {
+  width:100%;padding:11px 14px;
+  background:var(--surface-2);border:1px solid var(--border-2);
+  border-radius:var(--radius-sm);color:var(--text);
+  font-size:14px;font-family:'DM Sans',sans-serif;
+  outline:none;transition:border-color .18s;
+}
+.splash-input:focus{border-color:var(--red);}
+.splash-input::placeholder{color:var(--text-3);}
+.splash-btn {
+  width:100%;padding:13px;
+  background:var(--red);border:none;border-radius:var(--radius-sm);
+  color:#fff;font-size:14px;font-weight:700;
+  font-family:'DM Sans',sans-serif;cursor:pointer;
+  transition:background .18s;margin-top:6px;letter-spacing:.2px;
+}
+.splash-btn:hover{background:var(--red-2);}
+.splash-btn:active{transform:scale(.98);}
+.splash-error {
+  font-size:12px;color:#f87171;text-align:center;
+  min-height:18px;margin-top:10px;
+}
+.splash-footer {
+  text-align:center;font-size:11px;color:var(--text-3);margin-top:20px;
+}
+.splash-divider {
+  height:1px;background:var(--border);margin:24px 0;
+}
+.splash-locked-badge {
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 12px;border-radius:99px;
+  background:var(--red-soft);border:1px solid var(--red-border);
+  color:var(--red);font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;
+  margin:0 auto 20px;display:flex;width:fit-content;
+}
+/* Blur app while not logged in */
+#appRoot {
+  transition:filter .4s ease, opacity .4s ease;
+}
+#appRoot.locked {
+  filter:blur(8px);
+  pointer-events:none;
+  user-select:none;
+  opacity:.4;
+}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:99px;}
+
+/* ── CLIENTES ADMIN ── */
+.cl-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+@media(max-width:700px){.cl-summary-grid{grid-template-columns:1fr 1fr;}}
+.cl-sum-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;text-align:center;position:relative;overflow:hidden;}
+.cl-sum-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cl-accent,var(--red));}
+.cl-sum-val{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;color:var(--text);line-height:1;}
+.cl-sum-lbl{font-size:10px;color:var(--text-3);margin-top:5px;text-transform:uppercase;letter-spacing:.6px;}
+.cl-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.cl-search{flex:1;min-width:160px;padding:8px 12px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}
+.cl-search:focus{border-color:var(--red);}
+.cl-filter-tab{padding:6px 14px;border-radius:99px;border:1px solid var(--border-2);background:transparent;color:var(--text-2);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.cl-filter-tab:hover{border-color:var(--red);color:var(--red);}
+.cl-filter-tab.active{background:var(--red);border-color:var(--red);color:#fff;}
+.cl-add-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--green);border:none;border-radius:var(--radius-sm);color:#fff;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .15s;margin-left:auto;}
+.cl-add-btn:hover{background:#00a05e;}
+.cl-table{width:100%;border-collapse:collapse;font-size:12px;}
+.cl-table th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.cl-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.cl-table tr:last-child td{border-bottom:none;}
+.cl-table tr:hover td{background:var(--surface-2);}
+.cl-name{font-weight:600;color:var(--text);font-size:13px;}
+.cl-user{font-size:10px;color:var(--text-3);margin-top:1px;font-family:'DM Mono',monospace;}
+.cl-plan-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;}
+.cl-plan-mensal{background:var(--blue-soft);color:var(--blue);border:1px solid rgba(59,130,246,.2);}
+.cl-plan-semestral{background:var(--amber-soft);color:var(--amber);border:1px solid rgba(245,158,11,.2);}
+.cl-plan-anual{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2);}
+.cl-status-ok{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;background:var(--green-soft);color:var(--green);border:1px solid rgba(0,184,107,.2);}
+.cl-status-warn{background:var(--amber-soft);color:var(--amber);border:1px solid rgba(245,158,11,.2);}
+.cl-status-exp{background:rgba(248,113,113,.08);color:#f87171;border:1px solid rgba(248,113,113,.2);}
+.cl-days-bar{width:80px;height:5px;background:var(--surface-3);border-radius:99px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:6px;}
+.cl-days-fill{height:100%;border-radius:99px;background:var(--green);}
+.cl-days-fill.warn{background:var(--amber);}
+.cl-days-fill.exp{background:#f87171;}
+.cl-actions{display:flex;gap:5px;justify-content:flex-end;}
+.cl-act-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-sm);border:1px solid var(--border-2);background:var(--surface-2);color:var(--text-2);cursor:pointer;font-size:12px;transition:all .15s;font-family:'DM Sans',sans-serif;}
+.cl-act-btn:hover{background:var(--surface-3);color:var(--text);}
+.cl-act-renew{border-color:rgba(0,184,107,.3);color:var(--green);}
+.cl-act-renew:hover{background:var(--green-soft);}
+.cl-act-edit{border-color:rgba(59,130,246,.3);color:var(--blue);}
+.cl-act-edit:hover{background:var(--blue-soft);}
+.cl-act-del{border-color:rgba(248,113,113,.3);color:#f87171;}
+.cl-act-del:hover{background:rgba(248,113,113,.08);}
+.cl-empty{text-align:center;padding:40px;color:var(--text-3);font-size:13px;}
+
+/* Modal cliente */
+.cl-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:900;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);}
+.cl-modal-box{background:var(--surface);border:1px solid var(--border-2);border-radius:16px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:slideDown .22s ease;}
+.cl-modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);}
+.cl-modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;}
+.cl-modal-close{width:28px;height:28px;border-radius:50%;background:var(--surface-3);border:none;color:var(--text-3);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.cl-modal-close:hover{background:rgba(248,113,113,.15);color:#f87171;}
+.cl-modal-body{padding:20px 22px;}
+.cl-modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+.cl-btn-save{padding:9px 20px;background:var(--red);border:none;border-radius:var(--radius-sm);color:#fff;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .15s;}
+.cl-btn-save:hover{background:var(--red-2);}
+.cl-btn-cancel{padding:9px 16px;background:transparent;border:1px solid var(--border-2);border-radius:var(--radius-sm);color:var(--text-2);font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;}
+.cl-btn-cancel:hover{background:var(--surface-2);}
+
+/* Pagamentos info */
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:600px){.pay-grid{grid-template-columns:1fr;}}
+.pay-card{background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius);padding:18px 20px;display:flex;gap:14px;align-items:flex-start;}
+.pay-icon{font-size:28px;flex-shrink:0;}
+.pay-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.pay-desc{font-size:12px;color:var(--text-3);line-height:1.6;}
+.pay-key{font-family:'DM Mono',monospace;font-size:11px;background:var(--surface-3);padding:6px 10px;border-radius:6px;margin-top:8px;color:var(--text-2);word-break:break-all;cursor:pointer;border:1px solid var(--border);}
+.pay-key:hover{border-color:var(--green);color:var(--green);}
+.pay-copy-hint{font-size:10px;color:var(--text-3);margin-top:4px;}
+.pay-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;margin-top:8px;}
+.pay-badge-pix{background:rgba(0,184,107,.1);color:var(--green);border:1px solid rgba(0,184,107,.2);}
+.pay-badge-usdt{background:rgba(38,161,123,.1);color:#26a17b;border:1px solid rgba(38,161,123,.2);}
+.pay-badge-mp{background:rgba(59,130,246,.1);color:var(--blue);border:1px solid rgba(59,130,246,.2);}
+.pay-steps{list-style:none;margin-top:10px;}
+.pay-steps li{font-size:11px;color:var(--text-3);padding:3px 0;padding-left:14px;position:relative;line-height:1.5;}
+.pay-steps li::before{content:'→';position:absolute;left:0;color:var(--red);}
 
 /* ── NAV ── */
 .nav{
@@ -1031,6 +1209,34 @@ td{padding:10px 12px;vertical-align:middle;white-space:nowrap;}
 </head>
 <body>
 
+<!-- ══ SPLASH LOGIN ══ -->
+<div id="splashLogin">
+  <div class="splash-bg-glow"></div>
+  <div class="splash-card">
+    <div class="splash-logo">
+      <div class="splash-logo-dot"></div>
+      <div class="splash-logo-text">BuscaPro</div>
+    </div>
+    <div class="splash-locked-badge">🔒 Área Restrita</div>
+    <div class="splash-title">Acesso à Plataforma</div>
+    <div class="splash-sub">Entre com suas credenciais para acessar o buscador de preços.</div>
+    <div class="splash-field">
+      <label class="splash-label" for="splashUser">Usuário</label>
+      <input class="splash-input" id="splashUser" type="text" placeholder="seu usuário" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('splashPass').focus()">
+    </div>
+    <div class="splash-field">
+      <label class="splash-label" for="splashPass">Senha</label>
+      <input class="splash-input" id="splashPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doSplashLogin()">
+    </div>
+    <button class="splash-btn" onclick="doSplashLogin()">Entrar →</button>
+    <div class="splash-error" id="splashError"></div>
+    <div class="splash-footer">BuscaPro © 2024 · Acesso autorizado apenas para assinantes</div>
+  </div>
+</div>
+
+<!-- ══ APP ROOT ══ -->
+<div id="appRoot" class="locked">
+
 <!-- NAV -->
 <nav class="nav">
   <div class="logo" onclick="showPage('main')">
@@ -1347,6 +1553,135 @@ td{padding:10px 12px;vertical-align:middle;white-space:nowrap;}
           </div>
         </div>
 
+        <!-- CLIENTS PANEL -->
+        <div class="acc-section" id="clientsPanel">
+          <div class="acc-section-title">👥 Gestão de Clientes</div>
+          <div class="acc-section-sub">Visualize, edite e renove planos de todos os assinantes.</div>
+
+          <!-- Summary Cards -->
+          <div class="cl-summary-grid">
+            <div class="cl-sum-card" style="--cl-accent:var(--green)">
+              <div class="cl-sum-val" id="clSumAtivos">0</div>
+              <div class="cl-sum-lbl">Ativos</div>
+            </div>
+            <div class="cl-sum-card" style="--cl-accent:var(--amber)">
+              <div class="cl-sum-val" id="clSumVencendo">0</div>
+              <div class="cl-sum-lbl">Vencem em 7 dias</div>
+            </div>
+            <div class="cl-sum-card" style="--cl-accent:#f87171">
+              <div class="cl-sum-val" id="clSumExp">0</div>
+              <div class="cl-sum-lbl">Expirados</div>
+            </div>
+            <div class="cl-sum-card" style="--cl-accent:var(--purple)">
+              <div class="cl-sum-val" id="clSumTotal">0</div>
+              <div class="cl-sum-lbl">Total Clientes</div>
+            </div>
+          </div>
+
+          <!-- Toolbar -->
+          <div class="cl-toolbar">
+            <input class="cl-search" id="clSearch" type="text" placeholder="🔍 Buscar cliente..." oninput="renderClients()">
+            <button class="cl-filter-tab active" data-clfilter="todos" onclick="setClFilter(this)">Todos</button>
+            <button class="cl-filter-tab" data-clfilter="ativo" onclick="setClFilter(this)">Ativos</button>
+            <button class="cl-filter-tab" data-clfilter="vencendo" onclick="setClFilter(this)">⚠️ Vencendo</button>
+            <button class="cl-filter-tab" data-clfilter="expirado" onclick="setClFilter(this)">Expirados</button>
+            <button class="cl-add-btn" onclick="openClientModal()">+ Novo Cliente</button>
+          </div>
+
+          <!-- Table -->
+          <div style="overflow-x:auto;">
+            <table class="cl-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Plano</th>
+                  <th>Status</th>
+                  <th>Vencimento</th>
+                  <th>Pagamento</th>
+                  <th style="text-align:right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="clTableBody"></tbody>
+            </table>
+            <div class="cl-empty" id="clEmpty" style="display:none">Nenhum cliente encontrado.</div>
+          </div>
+        </div>
+
+        <!-- PAYMENTS SECTION -->
+        <div class="acc-section">
+          <div class="acc-section-title">💰 Como Receber Pagamentos</div>
+          <div class="acc-section-sub">Configure seus métodos de recebimento para as assinaturas dos clientes.</div>
+
+          <div class="pay-grid">
+            <!-- PIX -->
+            <div class="pay-card">
+              <span class="pay-icon">🏦</span>
+              <div style="flex:1">
+                <div class="pay-title">PIX — Instantâneo</div>
+                <div class="pay-desc">Método mais usado no Brasil. O cliente paga e você confirma manualmente no painel.</div>
+                <div class="pay-badge pay-badge-pix">● PIX</div>
+                <div class="pay-key" onclick="copyText(this)" title="Clique para copiar">Sua chave PIX aqui (CPF, e-mail ou aleatória)</div>
+                <div class="pay-copy-hint">Clique para copiar · edite a chave no código</div>
+                <ul class="pay-steps">
+                  <li>Cliente paga via PIX</li>
+                  <li>Você recebe notificação no banco</li>
+                  <li>Ativa o cliente manualmente aqui</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- USDT -->
+            <div class="pay-card">
+              <span class="pay-icon">₮</span>
+              <div style="flex:1">
+                <div class="pay-title">USDT (Tether) — Cripto</div>
+                <div class="pay-desc">Pagamento em stablecoin via blockchain. Ideal para clientes internacionais ou que preferem cripto.</div>
+                <div class="pay-badge pay-badge-usdt">● USDT TRC-20</div>
+                <div class="pay-key" onclick="copyText(this)" title="Clique para copiar">Seu endereço USDT TRC-20 aqui</div>
+                <div class="pay-copy-hint">Clique para copiar · rede TRC-20 (TRON)</div>
+                <ul class="pay-steps">
+                  <li>Cliente envia USDT na rede TRC-20</li>
+                  <li>Verifique no Binance / Trust Wallet</li>
+                  <li>Ativa o cliente manualmente aqui</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Mercado Pago -->
+            <div class="pay-card">
+              <span class="pay-icon">💙</span>
+              <div style="flex:1">
+                <div class="pay-title">Mercado Pago — Link de Pagamento</div>
+                <div class="pay-desc">Crie um link de cobrança com cartão, PIX ou boleto. Confirmação automática.</div>
+                <div class="pay-badge pay-badge-mp">● Mercado Pago</div>
+                <ul class="pay-steps">
+                  <li>Acesse mercadopago.com.br</li>
+                  <li>Crie uma cobrança recorrente</li>
+                  <li>Envie o link de pagamento ao cliente via WhatsApp</li>
+                  <li>Receba notificação automática de pagamento</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Processo Manual -->
+            <div class="pay-card">
+              <span class="pay-icon">📋</span>
+              <div style="flex:1">
+                <div class="pay-title">Fluxo Recomendado</div>
+                <div class="pay-desc">Como gerenciar assinaturas manualmente com eficiência.</div>
+                <ul class="pay-steps">
+                  <li>Cliente entra em contato via WhatsApp</li>
+                  <li>Você envia a chave PIX ou link de pagamento</li>
+                  <li>Após confirmação, adicione o cliente aqui</li>
+                  <li>Defina o plano e data de vencimento</li>
+                  <li>O painel alerta quando clientes estão vencendo</li>
+                  <li>Renove com 1 clique no botão ✅</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="acc-section">
           <div class="acc-section-title">📤 Atualizar Base de Dados</div>
           <div class="acc-section-sub">Faça upload de uma planilha XLSX para <b>adicionar ao histórico</b>. Os dados existentes são mantidos e entradas com mais de 30 dias são removidas automaticamente.</div>
@@ -1517,6 +1852,65 @@ td{padding:10px 12px;vertical-align:middle;white-space:nowrap;}
     </div>
 
   </div><!-- /pricing-page -->
+</div>
+
+<!-- CLIENT MODAL -->
+<div id="clModal" class="cl-modal-overlay" style="display:none;" onclick="if(event.target===this)closeClientModal()">
+  <div class="cl-modal-box">
+    <div class="cl-modal-header">
+      <div class="cl-modal-title" id="clModalTitle">Novo Cliente</div>
+      <button class="cl-modal-close" onclick="closeClientModal()">×</button>
+    </div>
+    <div class="cl-modal-body">
+      <input type="hidden" id="clEditId">
+      <div class="form-group">
+        <label class="form-lbl">Nome completo</label>
+        <input class="form-input" id="clInputName" type="text" placeholder="Nome do cliente">
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Usuário (login)</label>
+        <input class="form-input" id="clInputUser" type="text" placeholder="usuario123">
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Senha</label>
+        <input class="form-input" id="clInputPass" type="text" placeholder="senha inicial">
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">WhatsApp (com DDD)</label>
+        <input class="form-input" id="clInputWa" type="text" placeholder="11999887766">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-lbl">Plano</label>
+          <select class="form-input" id="clInputPlano" style="padding:11px 14px;">
+            <option value="Mensal">Mensal — R$ 257,99</option>
+            <option value="Semestral">Semestral — R$ 227,99/mês</option>
+            <option value="Anual">Anual — R$ 187,99/mês</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-lbl">Dias de acesso</label>
+          <input class="form-input" id="clInputDias" type="number" min="1" max="365" value="30" placeholder="30">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Status de pagamento</label>
+        <select class="form-input" id="clInputPgto" style="padding:11px 14px;">
+          <option value="Pago">✅ Pago</option>
+          <option value="Pendente">⏳ Pendente</option>
+          <option value="Atrasado">❌ Atrasado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Observações</label>
+        <input class="form-input" id="clInputObs" type="text" placeholder="Ex: cliente fidelizado, pagou anual...">
+      </div>
+    </div>
+    <div class="cl-modal-footer">
+      <button class="cl-btn-cancel" onclick="closeClientModal()">Cancelar</button>
+      <button class="cl-btn-save" onclick="saveClient()">💾 Salvar</button>
+    </div>
+  </div>
 </div>
 
 <!-- FINANCEIRO MODAL -->
@@ -2318,6 +2712,7 @@ function doLogin(){
     document.getElementById('adminSection').className='admin-section'+(user.isAdmin?' visible':'');
     // Hide client section for admin
     document.getElementById('clientSection').style.display=user.isAdmin?'none':'block';
+    if(user.isAdmin) { renderClients(); loadClientsFromFirebase(); }
     updateNavAccount();
     updateStats();
     loadTheme(); // refresh theme button selection state
@@ -2432,6 +2827,218 @@ function processXLSX(file){
 function showResult(type,msg){const el=document.getElementById('uploadResult');el.className='upload-result '+type;el.textContent=msg;el.style.display='block';}
 
 // ═══════════════════════════════════════════
+// CLIENT MANAGEMENT
+// ═══════════════════════════════════════════
+// Clientes armazenados em Firebase (buscapro/clientes) + localStorage fallback
+let CLIENTS = JSON.parse(localStorage.getItem('buscapro_clients') || '[]');
+if(!CLIENTS.length) {
+  // Dados de exemplo para demonstração
+  const today = new Date();
+  const addDays = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r.toISOString().slice(0,10); };
+  CLIENTS = [
+    {id:'c1',name:'Lucas Oliveira',username:'lucas',pass:'lucas123',wa:'11999887766',plano:'Mensal',dias:17,vencimento:addDays(today,17),pgto:'Pago',obs:'Cliente antigo',createdAt:addDays(today,-13)},
+    {id:'c2',name:'Cliente Demo',username:'cliente',pass:'senha123',wa:'11988776655',plano:'Semestral',dias:5,vencimento:addDays(today,5),pgto:'Pago',obs:'',createdAt:addDays(today,-25)},
+    {id:'c3',name:'Usuário Teste',username:'teste',pass:'teste123',wa:'11977665544',plano:'Anual',dias:30,vencimento:addDays(today,30),pgto:'Pago',obs:'Renovação automática',createdAt:addDays(today,-0)},
+    {id:'c4',name:'Maria Santos',username:'maria',pass:'maria123',wa:'11966554433',plano:'Mensal',dias:0,vencimento:addDays(today,-2),pgto:'Atrasado',obs:'',createdAt:addDays(today,-32)},
+    {id:'c5',name:'João Silva',username:'joao',pass:'joao123',wa:'11955443322',plano:'Semestral',dias:3,vencimento:addDays(today,3),pgto:'Pendente',obs:'Aguardando confirmação',createdAt:addDays(today,-177)},
+  ];
+  saveClients();
+}
+
+let clFilter = 'todos';
+
+function saveClients() {
+  localStorage.setItem('buscapro_clients', JSON.stringify(CLIENTS));
+  // Sync to Firebase if available
+  if(fbDb) {
+    try { fbDb.ref('buscapro/clientes').set(CLIENTS); } catch(e){}
+  }
+}
+
+function loadClientsFromFirebase() {
+  if(!fbDb) return;
+  fbDb.ref('buscapro/clientes').on('value', snap => {
+    const data = snap.val();
+    if(data && Array.isArray(data) && data.length > 0) {
+      CLIENTS = data;
+      localStorage.setItem('buscapro_clients', JSON.stringify(CLIENTS));
+      if(currentUser && currentUser.isAdmin) renderClients();
+    }
+  });
+}
+
+function getClientStatus(c) {
+  const dias = getDaysLeft(c.vencimento);
+  if(dias <= 0) return 'expirado';
+  if(dias <= 7) return 'vencendo';
+  return 'ativo';
+}
+
+function getDaysLeft(vencimento) {
+  if(!vencimento) return 0;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const venc = new Date(vencimento); venc.setHours(0,0,0,0);
+  return Math.round((venc - today) / (1000*60*60*24));
+}
+
+function setClFilter(btn) {
+  document.querySelectorAll('.cl-filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  clFilter = btn.dataset.clfilter;
+  renderClients();
+}
+
+function renderClients() {
+  const q = (document.getElementById('clSearch')?.value || '').toLowerCase().trim();
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  let list = CLIENTS.filter(c => {
+    const dias = getDaysLeft(c.vencimento);
+    if(clFilter === 'ativo' && dias <= 0) return false;
+    if(clFilter === 'vencendo' && (dias <= 0 || dias > 7)) return false;
+    if(clFilter === 'expirado' && dias > 0) return false;
+    if(q && !`${c.name} ${c.username} ${c.plano} ${c.wa}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  // Sort: expirados primeiro (urgência), depois por dias asc
+  list.sort((a,b) => getDaysLeft(a.vencimento) - getDaysLeft(b.vencimento));
+
+  // Summary counts
+  const ativos = CLIENTS.filter(c => getDaysLeft(c.vencimento) > 7).length;
+  const vencendo = CLIENTS.filter(c => { const d=getDaysLeft(c.vencimento); return d>0&&d<=7; }).length;
+  const expirados = CLIENTS.filter(c => getDaysLeft(c.vencimento) <= 0).length;
+  document.getElementById('clSumAtivos').textContent = ativos;
+  document.getElementById('clSumVencendo').textContent = vencendo;
+  document.getElementById('clSumExp').textContent = expirados;
+  document.getElementById('clSumTotal').textContent = CLIENTS.length;
+
+  const body = document.getElementById('clTableBody');
+  const empty = document.getElementById('clEmpty');
+  if(!list.length) { body.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+
+  body.innerHTML = list.map(c => {
+    const dias = getDaysLeft(c.vencimento);
+    const status = getClientStatus(c);
+    const statusLabel = status==='ativo'?'Ativo':status==='vencendo'?'Vencendo':'Expirado';
+    const statusCls = status==='ativo'?'cl-status-ok':status==='vencendo'?'cl-status-ok cl-status-warn':'cl-status-ok cl-status-exp';
+    const barPct = Math.max(0, Math.min(100, (dias/30)*100));
+    const barCls = dias<=0?'exp':dias<=7?'warn':'';
+    const planoCls = c.plano==='Anual'?'cl-plan-anual':c.plano==='Semestral'?'cl-plan-semestral':'cl-plan-mensal';
+    const pgtoIcon = c.pgto==='Pago'?'✅':c.pgto==='Pendente'?'⏳':'❌';
+    const waHref = c.wa ? `https://wa.me/55${c.wa.replace(/\D/g,'')}?text=${encodeURIComponent('Olá '+c.name.split(' ')[0]+'! Sua assinatura BuscaPro vence em '+dias+' dias. Gostaria de renovar?')}` : '#';
+    const diasTxt = dias<=0 ? `<span style="color:#f87171">Expirado há ${Math.abs(dias)}d</span>` : `${dias} dia${dias!==1?'s':''}`;
+
+    return `<tr>
+      <td>
+        <div class="cl-name">${c.name}</div>
+        <div class="cl-user">@${c.username}${c.wa?` · 📱 ${c.wa}`:''}</div>
+      </td>
+      <td><span class="cl-plan-badge ${planoCls}">${c.plano}</span></td>
+      <td>
+        <span class="cl-status-ok ${statusCls}">● ${statusLabel}</span>
+      </td>
+      <td>
+        <div style="white-space:nowrap">
+          ${diasTxt}
+          <div class="cl-days-bar"><div class="cl-days-fill ${barCls}" style="width:${barPct}%"></div></div>
+        </div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:2px;">${c.vencimento||'—'}</div>
+      </td>
+      <td style="white-space:nowrap">${pgtoIcon} ${c.pgto||'—'}</td>
+      <td>
+        <div class="cl-actions">
+          ${c.wa?`<a href="${waHref}" target="_blank" class="cl-act-btn" title="WhatsApp" style="background:#25d366;color:#fff;border-color:#25d366;text-decoration:none;">💬</a>`:''}
+          <button class="cl-act-btn cl-act-renew" title="Renovar 30 dias" onclick="renewClient('${c.id}')">✅</button>
+          <button class="cl-act-btn cl-act-edit" title="Editar" onclick="openClientModal('${c.id}')">✏️</button>
+          <button class="cl-act-btn cl-act-del" title="Remover" onclick="deleteClient('${c.id}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Update USERS object from CLIENTS (so login works)
+  CLIENTS.forEach(c => {
+    USERS[c.username] = {pass:c.pass, name:c.name, isAdmin:false, dias:Math.max(0,getDaysLeft(c.vencimento))};
+  });
+}
+
+function openClientModal(id) {
+  const c = id ? CLIENTS.find(x=>x.id===id) : null;
+  document.getElementById('clEditId').value = id || '';
+  document.getElementById('clModalTitle').textContent = c ? 'Editar Cliente' : 'Novo Cliente';
+  document.getElementById('clInputName').value = c?.name || '';
+  document.getElementById('clInputUser').value = c?.username || '';
+  document.getElementById('clInputPass').value = c?.pass || '';
+  document.getElementById('clInputWa').value = c?.wa || '';
+  document.getElementById('clInputPlano').value = c?.plano || 'Mensal';
+  document.getElementById('clInputDias').value = c ? Math.max(0,getDaysLeft(c.vencimento)) : 30;
+  document.getElementById('clInputPgto').value = c?.pgto || 'Pago';
+  document.getElementById('clInputObs').value = c?.obs || '';
+  document.getElementById('clModal').style.display = 'flex';
+}
+
+function closeClientModal() {
+  document.getElementById('clModal').style.display = 'none';
+}
+
+function saveClient() {
+  const id = document.getElementById('clEditId').value;
+  const name = document.getElementById('clInputName').value.trim();
+  const username = document.getElementById('clInputUser').value.trim();
+  const pass = document.getElementById('clInputPass').value.trim();
+  const wa = document.getElementById('clInputWa').value.trim().replace(/\D/g,'');
+  const plano = document.getElementById('clInputPlano').value;
+  const dias = parseInt(document.getElementById('clInputDias').value) || 30;
+  const pgto = document.getElementById('clInputPgto').value;
+  const obs = document.getElementById('clInputObs').value.trim();
+
+  if(!name || !username) { showToast('Nome e usuário são obrigatórios', 'error'); return; }
+
+  const vencimento = new Date();
+  vencimento.setDate(vencimento.getDate() + dias);
+  const vencStr = vencimento.toISOString().slice(0,10);
+
+  if(id) {
+    const idx = CLIENTS.findIndex(c=>c.id===id);
+    if(idx>=0) CLIENTS[idx] = {...CLIENTS[idx], name,username,pass,wa,plano,dias,vencimento:vencStr,pgto,obs};
+  } else {
+    const newId = 'c' + Date.now();
+    CLIENTS.push({id:newId,name,username,pass,wa,plano,dias,vencimento:vencStr,pgto,obs,createdAt:new Date().toISOString().slice(0,10)});
+  }
+  saveClients();
+  renderClients();
+  closeClientModal();
+  showToast(id ? 'Cliente atualizado!' : 'Cliente adicionado!', 'success');
+}
+
+function deleteClient(id) {
+  if(!confirm('Remover este cliente?')) return;
+  CLIENTS = CLIENTS.filter(c=>c.id!==id);
+  saveClients();
+  renderClients();
+  showToast('Cliente removido', 'success');
+}
+
+function renewClient(id) {
+  const c = CLIENTS.find(x=>x.id===id);
+  if(!c) return;
+  const diasPlano = c.plano==='Anual'?365:c.plano==='Semestral'?180:30;
+  const base = getDaysLeft(c.vencimento) > 0 ? new Date(c.vencimento) : new Date();
+  base.setDate(base.getDate() + diasPlano);
+  c.vencimento = base.toISOString().slice(0,10);
+  c.pgto = 'Pago';
+  saveClients();
+  renderClients();
+  showToast(`✅ ${c.name.split(' ')[0]} renovado por ${diasPlano} dias!`, 'success');
+}
+
+function copyText(el) {
+  navigator.clipboard.writeText(el.textContent.trim()).then(() => showToast('Copiado!', 'success'));
+}
+
+// ═══════════════════════════════════════════
 // THEME
 // ═══════════════════════════════════════════
 function setTheme(t) {
@@ -2496,6 +3103,14 @@ function initFirebase() {
     const app = firebase.initializeApp(FB_CONFIG);
     fbDb  = firebase.database(app);
     fbRef = fbDb.ref('buscapro/dados');
+    // Load clients from Firebase
+    fbDb.ref('buscapro/clientes').once('value').then(snap => {
+      const d = snap.val();
+      if(d && Array.isArray(d) && d.length > 0) {
+        CLIENTS = d;
+        localStorage.setItem('buscapro_clients', JSON.stringify(CLIENTS));
+      }
+    });
 
     setSyncStatus('syncing', 'Conectando...');
 
@@ -2568,5 +3183,6 @@ document.getElementById('fDate').value = `${_today.getFullYear()}-${_pad(_today.
 applyFilters();
 initFirebase();
 </script>
+</div><!-- /appRoot -->
 </body>
 </html>
