@@ -322,7 +322,15 @@ select:focus{border-color:var(--red);}
 }
 .clear-btn:hover{color:var(--text-2);border-color:var(--border-2);}
 
-/* ── RESULTS ROW ── */
+/* ── FILTERS TOGGLE BTN (inside quick-filters, mobile only) ── */
+.qf-filter-btn { display: none; align-items: center; gap: 5px; margin-left: auto; }
+.filters-toggle-count {
+  background: var(--red); color: #fff; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 99px; min-width: 18px; text-align: center;
+}
+.filters-toggle-arrow { transition: transform .2s; flex-shrink: 0; }
+.filters-toggle-arrow.open { transform: rotate(180deg); }
+.qf-filter-btn.active { border-color: var(--red) !important; color: var(--red) !important; background: var(--red-soft) !important; }
 .results-row{
   display:flex;align-items:center;justify-content:space-between;
   padding:10px 28px;border-bottom:1px solid var(--border);
@@ -420,8 +428,10 @@ td{padding:10px 12px;vertical-align:middle;white-space:nowrap;}
 .badge-blue{background:var(--blue-soft);color:var(--blue);}
 .badge-amber{background:var(--amber-soft);color:var(--amber);}
 
-/* Ícones inline do fornecedor */
-.sup-icons{display:inline-flex;align-items:center;gap:5px;margin-left:2px;}
+/* desktop: mobile-only elements hidden by default */
+.mobile-attrs { display: none; }
+.mobile-card-price { display: none; }
+.mobile-card-wa { display: none; }
 .sup-icon{
   display:inline-flex;align-items:center;justify-content:center;
   width:20px;height:20px;border-radius:50%;cursor:pointer;
@@ -653,14 +663,21 @@ td{padding:10px 12px;vertical-align:middle;white-space:nowrap;}
   .quick-filters{gap:5px;margin-top:8px;}
   .qf-btn{padding:5px 11px;font-size:11px;}
 
-  /* Filters: grid 2 colunas no mobile, cada grupo ocupa 1 célula */
+  /* Botão filtros na barra de quick-filters */
+  .qf-filter-btn { display: flex !important; }
+  .qf-clear-btn { } /* mantém visível */
+
+  /* Filters: escondido por padrão no mobile, abre ao clicar */
   .filters-row{
-    display:grid;
+    display:none;
     grid-template-columns:1fr 1fr;
     gap:8px;
     padding:10px 12px;
-    margin-top:10px;
+    margin-top:0;
     align-items:start;
+  }
+  .filters-row.filters-open {
+    display: grid;
   }
   .filter-group{display:flex;flex-direction:column;gap:3px;min-width:0;}
   .filter-lbl{font-size:9px;}
@@ -704,20 +721,99 @@ td{padding:10px 12px;vertical-align:middle;white-space:nowrap;}
     border-bottom:none;
   }
 
-  /* Table: scroll horizontal com células compactas */
+  /* Table: vira cards no mobile */
   .table-wrap{padding:0 12px 16px;-webkit-overflow-scrolling:touch;}
-  table{min-width:500px;}
-  td,thead th{padding:8px 8px;font-size:11px;}
-  .prod-name{font-size:12px;}
-  .prod-obs{display:none;}
-  .sup-loc{display:none;}
-  .price-val{font-size:13px;}
-  /* Esconde só Região no mobile — Cor: mostra só bolinha */
-  .color-label{display:none;}
-  /* Esconde só Região no mobile — Cor: mostra só bolinha */
-  .color-label{display:none !important;}
-  /* Esconde só Região no mobile — Cor fica visível */
-  table th:nth-child(6),table td:nth-child(6){display:none;}
+  table{min-width:0!important;width:100%;border-collapse:separate;border-spacing:0 8px;}
+  thead{display:none;}
+  tbody tr{
+    display:block;
+    background:var(--surface);
+    border:1px solid var(--border-2)!important;
+    border-radius:14px!important;
+    padding:14px 16px 12px;
+    cursor:pointer;
+    transition:background .15s, border-color .15s;
+    position:relative;
+    overflow:hidden;
+  }
+  tbody tr::before{
+    content:'';
+    position:absolute;left:0;top:0;bottom:0;
+    width:3px;border-radius:14px 0 0 14px;
+    background:var(--surface-3);
+  }
+  tbody tr:hover{background:var(--surface-2);border-color:var(--border-2)!important;}
+  tbody tr:last-child{border-bottom:1px solid var(--border-2)!important;}
+  td{
+    display:block!important;
+    padding:0!important;
+    white-space:normal!important;
+    font-size:13px;
+    border:none!important;
+  }
+  /* Linha 1: Produto + Preço */
+  td:nth-child(1){
+    display:flex!important;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:10px;
+  }
+  td:nth-child(1) .prod-name{font-size:14px;font-weight:700;color:var(--text);line-height:1.3;flex:1;padding-right:12px;}
+  td:nth-child(1) .prod-obs{font-size:10px;color:var(--text-3);margin-top:2px;}
+  /* Preço: move para dentro da td:nth-child(1) via JS */
+  .mobile-card-price{
+    font-family:'DM Mono',monospace;font-size:17px;font-weight:600;
+    white-space:nowrap;flex-shrink:0;
+    align-self:flex-start;
+    margin-top:1px;
+  }
+  .mobile-card-price.price-best{color:var(--green);}
+  .mobile-card-price.price-mid{color:var(--text);}
+  .mobile-card-price.price-hi{color:#f87171;}
+
+  /* Linha 2: Fornecedor */
+  td:nth-child(2){
+    margin-bottom:8px;
+  }
+  td:nth-child(2) .sup-name{font-size:12px;font-weight:700;}
+  td:nth-child(2) .sup-loc{font-size:10px;color:var(--text-3);margin-top:2px;display:block!important;}
+
+  /* Linha 3: Badges de atributos */
+  .mobile-attrs{
+    display:flex;flex-wrap:wrap;gap:6px;
+    margin-top:6px;
+  }
+  .mobile-attr{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:3px 9px;border-radius:99px;
+    background:var(--surface-2);border:1px solid var(--border-2);
+    font-size:10px;font-weight:500;color:var(--text-2);
+  }
+  .mobile-attr-label{font-size:9px;color:var(--text-3);margin-right:1px;text-transform:uppercase;letter-spacing:.3px;}
+
+  /* Linha 4: WA Button */
+  .mobile-card-wa{
+    display:flex;width:100%;
+    background:#25d366;color:#fff;
+    border:none;border-radius:9px;
+    padding:10px;font-size:13px;font-weight:600;
+    font-family:'DM Sans',sans-serif;cursor:pointer;
+    text-decoration:none;align-items:center;justify-content:center;gap:7px;
+    margin-top:10px;transition:background .15s;
+  }
+  .mobile-card-wa:hover{background:#1ebe5d;}
+  .mobile-card-wa svg{width:16px;height:16px;flex-shrink:0;}
+
+  /* Esconde colunas desnecessárias como td genérico (Storage, Cor, Tipo, Região, Preço — tudo vai para mobile-attrs) */
+  td:nth-child(3),td:nth-child(4),td:nth-child(5),td:nth-child(6),td:nth-child(7){display:none!important;}
+
+  /* Esconde o ícone redondo de WA no mobile (tem botão completo abaixo) */
+  .sup-icon-wa { display: none !important; }
+
+  /* No mobile: esconde ícone WA azul (botão verde já existe), mostra só verif/usdt */
+  .mobile-attrs { display: flex !important; }
+  .mobile-card-price { display: inline !important; }
+  .mobile-card-wa { display: flex !important; }
 
   /* WA button compacto */
   .wa-btn{padding:5px 8px;font-size:10px;}
@@ -974,12 +1070,18 @@ td{padding:10px 12px;vertical-align:middle;white-space:nowrap;}
       <button class="qf-btn active" data-tipo="todos" onclick="setTipo(this)">Todos</button>
       <button class="qf-btn" data-tipo="LACRADO" onclick="setTipo(this)">📦 Lacrado</button>
       <button class="qf-btn" data-tipo="SEMI-NOVO" onclick="setTipo(this)">♻️ Semi-novo</button>
-      <button class="qf-btn qf-clear-btn" onclick="clearAllFilters()" title="Limpar todos os filtros">✕ Limpar filtros</button>
+      <button class="qf-btn qf-clear-btn" onclick="clearAllFilters()" title="Limpar todos os filtros">✕ Limpar</button>
+      <button class="qf-btn qf-filter-btn" id="filtersToggleBtn" onclick="toggleFilters()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+        Filtros
+        <span class="filters-toggle-count" id="filtersActiveCount" style="display:none"></span>
+        <svg class="filters-toggle-arrow" id="filtersArrow" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
     </div>
   </div>
 
   <!-- FILTERS -->
-  <div class="filters-row">
+  <div class="filters-row" id="filtersRow">
     <div class="filter-group">
       <label class="filter-lbl">Data</label>
       <input type="date" class="date-input" id="fDate" onchange="applyFilters()" title="Filtrar por dia">
@@ -1742,7 +1844,21 @@ function clearAllFilters(){
   tipoFilter='todos';document.querySelectorAll('[data-tipo]').forEach(b=>b.classList.remove('active'));
   document.querySelector('[data-tipo="todos"]').classList.add('active');
   currentPage=1;closeAC();
-  function planCTA(plan, price) {
+  populateFilters();
+  applyFilters();
+  document.getElementById('cmpBlock').classList.remove('visible');
+  // Fecha painel de filtros no mobile após limpar
+  const filtersRow = document.getElementById('filtersRow');
+  if(filtersRow) {
+    filtersRow.classList.remove('filters-open');
+    const btn = document.getElementById('filtersToggleBtn');
+    const arrow = document.getElementById('filtersArrow');
+    if(btn) btn.classList.remove('active');
+    if(arrow) arrow.classList.remove('open');
+  }
+}
+
+function planCTA(plan, price) {
   const msg = encodeURIComponent('Olá! Gostaria de assinar o Plano ' + plan + ' do BuscaPro (' + price + '). Como prosseguir?');
   window.open('https://wa.me/5515812777378?text=' + msg, '_blank');
 }
@@ -1751,9 +1867,26 @@ function planContact() {
   window.open('https://wa.me/5515812777378?text=' + msg, '_blank');
 }
 
-populateFilters(); // reseta cores/storages para o total
-  applyFilters();
-  document.getElementById('cmpBlock').classList.remove('visible');
+// ═══════════════════════════════════════════
+// MOBILE FILTERS TOGGLE
+// ═══════════════════════════════════════════
+function toggleFilters() {
+  const row = document.getElementById('filtersRow');
+  const btn = document.getElementById('filtersToggleBtn');
+  const arrow = document.getElementById('filtersArrow');
+  const isOpen = row.classList.toggle('filters-open');
+  if(btn) btn.classList.toggle('active', isOpen);
+  if(arrow) arrow.classList.toggle('open', isOpen);
+}
+
+function updateFiltersCount() {
+  const activeIds = ['fCat','fStorage','fCor','fRegiao','fForn','fLocal'];
+  const count = activeIds.filter(id => document.getElementById(id).value !== '').length
+    + (document.getElementById('fDate').value !== new Date().toISOString().slice(0,10) ? 1 : 0)
+    + (document.getElementById('verifiedPill').classList.contains('active') ? 1 : 0);
+  const badge = document.getElementById('filtersActiveCount');
+  if (count > 0) { badge.textContent = count; badge.style.display = ''; }
+  else { badge.style.display = 'none'; }
 }
 
 function applyFilters(){
@@ -1815,6 +1948,7 @@ function applyFilters(){
     document.getElementById('cmpBlock').classList.remove('visible');
   }
   updateStats();
+  updateFiltersCount();
 }
 
 // ═══════════════════════════════════════════
@@ -1847,12 +1981,6 @@ function renderTable(){
     const waTxt=`Olá! Vi no BuscaPro: ${d.p}${d.s?' '+d.s:''}${d.c?' '+d.c:''} por ${fmt(d.pr)}. Ainda disponível?`;
     const waHref=d.w?`https://wa.me/55${d.w.replace(/\D/g,'')}?text=${encodeURIComponent(waTxt)}`:'#';
 
-    // Ícone WhatsApp inline (clicável)
-    const waIcon = d.w
-      ? `<a href="${waHref}" target="_blank" class="sup-icon sup-icon-wa" data-tip="Chamar no WhatsApp" onclick="event.stopPropagation()" title="">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.094.541 4.065 1.487 5.782L.057 23.026a.75.75 0 0 0 .917.917l5.244-1.43A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.713 9.713 0 0 1-4.908-1.327l-.352-.208-3.645.994.993-3.535-.228-.364A9.72 9.72 0 0 1 2.25 12c0-5.376 4.374-9.75 9.75-9.75S21.75 6.624 21.75 12 17.376 21.75 12 21.75z"/></svg>
-        </a>` : '';
-
     // Ícone Verificado (checkmark azul)
     const verifIcon = d.v==='SIM'
       ? `<span class="sup-icon sup-icon-verif" data-tip="Fornecedor verificado pela plataforma">
@@ -1864,9 +1992,40 @@ function renderTable(){
       ? `<span class="sup-icon sup-icon-usdt" data-tip="Aceita pagamento em USDT (Tether)">₮</span>`
       : '';
 
+    const borderAccent = rel<0.2 ? 'var(--green)' : rel>0.8 ? '#f87171' : 'var(--surface-3)';
+
+    // Mobile: só tipo e região nos badges (sem storage/cor duplicados)
+    const mobileAttrs = [];
+    if(d.t) mobileAttrs.push(`<span class="badge ${tipoCls}">${d.t}</span>`);
+    if(d.r) mobileAttrs.push(`<span class="mobile-attr"><span class="mobile-attr-label">Região</span>${d.r}</span>`);
+
+    // Botão WA verde — substitui o ícone azul no mobile
+    const waBtnMobile = d.w
+      ? `<a href="${waHref}" target="_blank" class="mobile-card-wa" onclick="event.stopPropagation()">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.094.541 4.065 1.487 5.782L.057 23.026a.75.75 0 0 0 .917.917l5.244-1.43A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.713 9.713 0 0 1-4.908-1.327l-.352-.208-3.645.994.993-3.535-.228-.364A9.72 9.72 0 0 1 2.25 12c0-5.376 4.374-9.75 9.75-9.75S21.75 6.624 21.75 12 17.376 21.75 12 21.75z"/></svg>
+          WhatsApp
+        </a>`
+      : '';
+
+    // No mobile: sup-icons sem waIcon (botão verde separado já cumpre essa função)
+    const mobileSupIcons = `${verifIcon}${usdtIcon}`;
+    // No desktop: só verif e usdt — WA já está no nome clicável
+    const desktopSupIcons = `${verifIcon}${usdtIcon}`;
+
     return `<tr onclick="rowClick('${d.p.replace(/'/g,"\\'")}','${(d.s||'').replace(/'/g,"\\'")}','${(d.c||'').replace(/'/g,"\\'")}')">
-      <td><div class="prod-name">${d.p}</div>${d.obs?`<div class="prod-obs">${d.obs}</div>`:''}</td>
-      <td><div class="sup-name">${d.w?`<a href="${waHref}" target="_blank" class="sup-name-link" onclick="event.stopPropagation()" title="Clique para chamar no WhatsApp">${d.f}</a>`:d.f}<span class="sup-icons">${waIcon}${verifIcon}${usdtIcon}</span></div><div class="sup-loc">${d.l||'—'}</div></td>
+      <td>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;">
+          <div style="position:absolute;left:-16px;top:-14px;bottom:-12px;width:3px;border-radius:14px 0 0 14px;background:${borderAccent};pointer-events:none;"></div>
+          <div><div class="prod-name">${d.p}</div>${d.obs?`<div class="prod-obs">${d.obs}</div>`:''}</div>
+          <span class="mobile-card-price ${cls}">${fmt(d.pr)}</span>
+        </div>
+      </td>
+      <td>
+        <div class="sup-name">${d.w?`<a href="${waHref}" target="_blank" class="sup-name-link" onclick="event.stopPropagation()" title="Clique para chamar no WhatsApp">${d.f}</a>`:d.f}<span class="sup-icons">${desktopSupIcons}</span></div>
+        <div class="sup-loc">${d.l||'—'}</div>
+        <div class="mobile-attrs">${mobileAttrs.join('')}</div>
+        ${waBtnMobile}
+      </td>
       <td>${d.s||'—'}</td>
       <td>${d.c?`${colorDot(d.c)}<span class="color-label">${d.c}</span>`:'—'}</td>
       <td><span class="badge ${tipoCls}">${d.t||'—'}</span></td>
@@ -2120,16 +2279,7 @@ function processXLSX(file){
         })).filter(d=>d.p&&d.pr>0);
         if(!newData.length) throw new Error('Nenhum registro válido encontrado.');
         ALL_DATA=[...newData];filtered=[...ALL_DATA];
-        function planCTA(plan, price) {
-  const msg = encodeURIComponent('Olá! Gostaria de assinar o Plano ' + plan + ' do BuscaPro (' + price + '). Como prosseguir?');
-  window.open('https://wa.me/5515812777378?text=' + msg, '_blank');
-}
-function planContact() {
-  const msg = encodeURIComponent('Olá! Tenho dúvidas sobre os planos do BuscaPro. Podem me ajudar?');
-  window.open('https://wa.me/5515812777378?text=' + msg, '_blank');
-}
-
-populateFilters();applyFilters();
+        populateFilters();applyFilters();
         bar.style.width='100%';progText.textContent='Concluído!';
         setTimeout(()=>prog.style.display='none',700);
         showResult('success',`✅ ${newData.length} registros importados com sucesso!`);
@@ -2199,16 +2349,7 @@ function initFirebase() {
       if (data && Array.isArray(data) && data.length > 0) {
         ALL_DATA = data;
         filtered = [...ALL_DATA];
-        function planCTA(plan, price) {
-  const msg = encodeURIComponent('Olá! Gostaria de assinar o Plano ' + plan + ' do BuscaPro (' + price + '). Como prosseguir?');
-  window.open('https://wa.me/5515812777378?text=' + msg, '_blank');
-}
-function planContact() {
-  const msg = encodeURIComponent('Olá! Tenho dúvidas sobre os planos do BuscaPro. Podem me ajudar?');
-  window.open('https://wa.me/5515812777378?text=' + msg, '_blank');
-}
-
-populateFilters();
+        populateFilters();
         applyFilters();
         setSyncStatus('online', 'Online · ' + ALL_DATA.length + ' produtos');
         fbReady = true;
@@ -2246,15 +2387,6 @@ function saveToFirebase() {
 // Normalize colors in ALL_DATA on load
 ALL_DATA.forEach(d => { d.c = normalizeColor(d.c, d.p); });
 filtered = [...ALL_DATA];
-function planCTA(plan, price) {
-  const msg = encodeURIComponent('Olá! Gostaria de assinar o Plano ' + plan + ' do BuscaPro (' + price + '). Como prosseguir?');
-  window.open('https://wa.me/5515812777378?text=' + msg, '_blank');
-}
-function planContact() {
-  const msg = encodeURIComponent('Olá! Tenho dúvidas sobre os planos do BuscaPro. Podem me ajudar?');
-  window.open('https://wa.me/5515812777378?text=' + msg, '_blank');
-}
-
 populateFilters();
 // Define data de hoje automaticamente no filtro de data
 const _today = new Date();
