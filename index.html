@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuscaPro — Buscador de Preços</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+:root {
+  --red: #e01c3b;
+  --red-2: #b81530;
+  --red-soft: rgba(224,28,59,.08);
+  --red-border: rgba(224,28,59,.2);
+  --green: #00b86b;
+  --green-soft: rgba(0,184,107,.1);
+  --amber: #f59e0b;
+  --amber-soft: rgba(245,158,11,.1);
+  --blue: #3b82f6;
+  --blue-soft: rgba(59,130,246,.1);
+  --purple: #a78bfa;
+  --bg: #0d0d10;
+  --surface: #15151a;
+  --surface-2: #1c1c22;
+  --surface-3: #242430;
+  --border: rgba(255,255,255,.06);
+  --border-2: rgba(255,255,255,.11);
+  --text: #eeeef5;
+  --text-2: #8888a0;
+  --text-3: #50505f;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,.4);
+  --shadow-lg: 0 16px 56px rgba(0,0,0,.65);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;color:var(--text);font-size:14px;line-height:1.5;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:99px;}
+
+/* ── NAV ── */
+.nav{
+  position:sticky;top:0;z-index:200;
+  background:rgba(13,13,16,.94);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  padding:0 28px;height:56px;
+}
+.logo{
+  font-family:'Syne',sans-serif;font-size:19px;font-weight:800;
+  letter-spacing:-0.5px;color:var(--text);
+  display:flex;align-items:center;gap:7px;flex-shrink:0;cursor:pointer;
+}
+.logo-dot{width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;box-shadow:0 0 8px rgba(224,28,59,.5);}
+.nav-sep{width:1px;height:20px;background:var(--border-2);margin:0 4px;}
+.nav-tabs{display:flex;gap:2px;}
+.nav-tab{
+  padding:5px 15px;border-radius:var(--radius-sm);border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  background:transparent;color:var(--text-2);transition:all .18s;
+}
+.nav-tab:hover{color:var(--text);background:var(--surface-2);}
+.nav-tab.active{background:var(--red);color:#fff;font-weight:600;}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+
+/* Dollar */
+.dollar-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface-2);border:1px solid var(--border-2);
+  padding:5px 11px;border-radius:99px;font-size:12px;
+}
+.dollar-val{color:var(--text);font-family:'DM Mono',monospace;font-size:12px;}
+.dollar-chg{font-size:10px;font-weight:700;}
+.dollar-chg.up{color:#f87171;}.dollar-chg.dn{color:var(--green);}
+.dollar-dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);}
+.dollar-dot.err{background:var(--text-3);box-shadow:none;}
+
+/* Login / Account btn */
+.account-btn{
+  display:flex;align-items:center;gap:7px;padding:6px 14px;
+  border-radius:var(--radius-sm);border:1px solid var(--border-2);
+  background:var(--surface-2);color:var(--text-2);font-size:12px;
+  font-weight:600;cursor:pointer;transition:all .18s;font-family:'DM Sans',sans-serif;
+  white-space:nowrap;
+}
+.account-btn:hover{background:var(--surface-3);color:var(--text);}
+.account-btn.logged{background:var(--red-soft);border-color:var(--red-border);color:var(--red);}
+.account-btn.logged:hover{background:rgba(224,28,59,.14);}
+.av-circle{
+  width:22px;height:22px;border-radius:50%;background:var(--red);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:#fff;flex-shrink:0;
+}
+
+/* ── PAGES ── */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── STATS BAR — 3 cards ── */
+.stats-bar{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+  padding:22px 28px 0;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px 20px;
+  position:relative;overflow:hidden;transition:border-color .2s;
+}
+.stat-card:hover{border-color:var(--border-2);}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--accent,var(--red));
+}
+.stat-card:nth-child(2){--accent:var(--green);}
+.stat-card:nth-child(3){--accent:var(--purple);}
+.stat-lbl{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+.stat-val{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;color:var(--text);line-height:1;}
+.stat-sub{font-size:11px;color:var(--text-3);margin-top:5px;}
+.stat-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:28px;opacity:.07;}
+
+/* ── SEARCH ── */
+.search-section{padding:20px 28px 0;}
+.search-outer{position:relative;width:100%;}
+.search-input{
+  width:100%;padding:13px 18px 13px 46px;
+  background:var(--surface);border:1px solid var(--border-2);
+  border-radius:var(--radius);color:var(--text);
+  font-size:14px;font-family:'DM Sans',sans-serif;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+.search-input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(224,28,59,.1);}
+.search-input::placeholder{color:var(--text-3);}
+.search-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none;}
+
+/* Autocomplete */
+.autocomplete-dropdown{
+  position:absolute;top:calc(100%+6px);left:0;right:0;z-index:300;
+  background:var(--surface-2);border:1px solid var(--border-2);
+  border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-lg);
+  display:none;
+}
+.autocomplete-dropdown.open{display:block;}
+.ac-item{
+  padding:10px 16px;cursor:pointer;display:flex;align-items:center;
+  gap:10px;border-bottom:1px solid var(--border);transition:background .1s;font-size:13px;
+}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover,.ac-item.focused{background:var(--surface-3);}
+.ac-item-icon{font-size:16px;flex-shrink:0;}
+.ac-item-name{flex:1;color:var(--text);font-weight:500;}
+.ac-item-name mark{background:transparent;color:var(--red);font-weight:700;}
+.ac-item-count{font-size:11px;color:var(--text-3);}
+.ac-empty{padding:14px 16px;color:var(--text-3);font-size:13px;text-align:center;}
+
+/* Quick filters */
+.quick-filters{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center;}
+.qf-btn{
+  padding:5px 14px;border-radius:99px;border:1px solid var(--border-2);
+  background:transparent;color:var(--text-2);font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;
+}
+.qf-btn:hover{border-color:var(--red);color:var(--red);}
+.qf-btn.active{background:var(--red);border-color:var(--red);color:#fff;}
+
+/* ── FILTERS ROW ── */
+.filters-row{
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  padding:14px 28px;border-bottom:1px solid var(--border);margin-top:14px;
+}
+.filter-group{display:flex;align-items:center;gap:5px;}
+.filter-lbl{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;}
+select{
+  padding:6px 10px;border:1px solid var(--border-2);border-radius:var(--radius-sm);
+  background:var(--surface-2);color:var(--text);font-size:12px;
+  font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;
+  transition:border-color .2s;appearance:none;padding-right:26px;
+  background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2350505f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+}
+select:focus{border-color:var(--red);}
+.filter-spacer{flex:1;}
+.date-input{
+  padding:6px 10px;border:1px solid var(--border-2);border-radius:var(--radius-sm);
+  background:var(--surface-2);color:var(--text-2);font-size:12px;
+  font-family:'DM Mono',monospace;outline:none;cursor:pointer;transition:border-color .2s;
+  color-scheme:dark;
+}
+.date-input:focus{border-color:var(--red);}
+.verified-pill{
+  display:flex;align-items:center;gap:5px;padding:5px 12px;
+  border:1px solid var(--border-2);border-radius:99px;cursor:pointer;
+  font-size:12px;font-weight:500;color:var(--text-2);background:transparent;
+  transition:all .15s;font-family:'DM Sans',sans-serif;
+}
+.verified-pill:hover{border-color:var(--green);color:var(--green);}
+.verified-pill.active{background:var(--green-soft);border-color:var(--green);color:var(--green);}
+.vdot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.clear-btn{
+  padding:5px 12px;border-radius:99px;border:1px solid var(--border);
+  background:transparent;color:var(--text-3);font-size:11px;font-weight:500;
+  cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;
+}
+.clear-btn:hover{color:var(--text-2);border-color:var(--border-2);}
+
+/* ── RESULTS ROW ── */
+.results-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 28px;border-bottom:1px solid var(--border);
+}
+.results-count{font-size:12px;color:var(--text-3);}
+.results-count b{color:var(--text);font-weight:600;}
+.sort-wrap{display:flex;align-items:center;gap:6px;}
+
+/* ── SYNC PILL ── */
+.sync-pill{
+  display:flex;align-items:center;gap:5px;
+  background:var(--surface-2);border:1px solid var(--border-2);
+  padding:4px 10px;border-radius:99px;font-size:11px;font-weight:600;
+  color:var(--text-3);cursor:default;transition:all .3s;
+}
+.sync-pill.online{border-color:rgba(0,184,107,.3);color:var(--green);}
+.sync-pill.syncing{border-color:rgba(245,158,11,.3);color:var(--amber);}
+.sync-pill.error{border-color:rgba(248,113,113,.3);color:#f87171;}
+.sync-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.sync-pill.online .sync-dot{box-shadow:0 0 5px var(--green);}
+@keyframes syncPulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-pill.syncing .sync-dot{animation:syncPulse .8s infinite;}
+
+/* ── COMPARE BLOCK — 6 colunas ── */
+.cmp-block{
+  margin:16px 28px;border:1px solid var(--border-2);border-radius:var(--radius);
+  overflow:hidden;display:none;
+  animation:slideDown .22s ease;
+}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
+.cmp-block.visible{display:block;}
+.cmp-head{
+  background:var(--surface-2);padding:10px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+}
+.cmp-title{font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.5px;}
+.cmp-subtitle{font-size:10px;color:var(--text-3);margin-top:1px;}
+.cmp-range{font-size:11px;color:var(--text-2);}
+.cmp-close{
+  width:22px;height:22px;border-radius:50%;background:var(--surface-3);border:none;
+  color:var(--text-3);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;
+}
+.cmp-close:hover{background:rgba(248,113,113,.15);color:#f87171;}
+.cmp-cards{display:grid;grid-template-columns:repeat(6,1fr);}
+@media(max-width:1100px){.cmp-cards{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:700px){.cmp-cards{grid-template-columns:repeat(2,1fr);}}
+.cc{padding:13px 14px;border-right:1px solid var(--border);position:relative;background:var(--surface);}
+.cc:last-child{border-right:none;}
+.cc:nth-child(6n){border-right:none;}
+.cc.best-cc{background:rgba(0,184,107,.04);}
+.cc-rank{position:absolute;top:7px;left:10px;font-size:9px;font-weight:800;color:var(--text-3);}
+.cc-tag{position:absolute;top:7px;right:8px;background:var(--green);color:#fff;font-size:8px;padding:2px 7px;border-radius:99px;font-weight:700;letter-spacing:.3px;}
+.cc-supplier{font-size:11px;font-weight:700;color:var(--red);margin-top:14px;}
+.cc-loc{font-size:9px;color:var(--text-3);margin-top:1px;}
+.cc-badge{font-size:9px;color:var(--text-3);margin-top:2px;}
+.cc-price{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;margin-top:7px;}
+.p-best{color:var(--green);}.p-mid{color:var(--text);}.p-high{color:#f87171;}
+.cc-spec{font-size:9px;color:var(--text-3);margin-top:2px;}
+.cc-meta{font-size:9px;color:var(--text-3);margin-top:2px;}
+.cc-diff{font-size:10px;margin-top:4px;}
+.cc-diff .pos{color:var(--green);}.cc-diff .neg{color:#f87171;}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;padding:0 28px 28px;}
+table{width:100%;border-collapse:collapse;min-width:740px;margin-top:10px;}
+thead th{
+  padding:10px 12px;text-align:left;font-size:10px;font-weight:700;
+  color:var(--text-3);text-transform:uppercase;letter-spacing:.7px;
+  border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;
+  user-select:none;transition:color .15s;
+}
+thead th:hover{color:var(--text-2);}
+thead th.sorted{color:var(--red);}
+thead th:last-child{text-align:right;}
+tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+tbody tr:hover{background:var(--surface-2);}
+tbody tr:last-child{border-bottom:none;}
+td{padding:10px 12px;vertical-align:middle;white-space:nowrap;}
+.prod-name{font-weight:600;color:var(--text);font-size:13px;}
+.prod-obs{font-size:10px;color:var(--text-3);margin-top:2px;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
+.sup-name{font-weight:600;color:var(--red);font-size:12px;display:flex;align-items:center;gap:4px;}
+.sup-loc{font-size:10px;color:var(--text-3);margin-top:2px;}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:9px;font-weight:700;letter-spacing:.3px;}
+.badge-green{background:var(--green-soft);color:var(--green);}
+.badge-blue{background:var(--blue-soft);color:var(--blue);}
+.badge-amber{background:var(--amber-soft);color:var(--amber);}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;border:1px solid rgba(255,255,255,.1);}
+.price-cell{text-align:right;}
+.price-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;}
+.price-best{color:var(--green);}.price-mid{color:var(--text);}.price-hi{color:#f87171;}
+.wa-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#25d366;color:#fff;border:none;border-radius:var(--radius-sm);
+  padding:5px 10px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;
+  cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap;
+}
+.wa-btn:hover{background:#1ebe5d;transform:translateY(-1px);}
+.no-results{padding:60px;text-align:center;color:var(--text-3);}
+.no-results p{font-size:14px;margin-top:10px;}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:center;gap:4px;padding:16px 28px;border-top:1px solid var(--border);}
+.pg-btn{
+  min-width:32px;height:32px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:transparent;color:var(--text-2);font-size:12px;font-family:'DM Sans',sans-serif;
+  cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;
+}
+.pg-btn:hover:not(:disabled){background:var(--surface-2);color:var(--text);}
+.pg-btn.active{background:var(--red);border-color:var(--red);color:#fff;font-weight:600;}
+.pg-btn:disabled{opacity:.3;cursor:default;}
+.pg-info{font-size:11px;color:var(--text-3);margin:0 8px;}
+
+/* ── ACCOUNT / LOGIN PAGE ── */
+.account-page{padding:28px;max-width:960px;margin:0 auto;}
+.login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:68vh;}
+.login-card{
+  background:var(--surface);border:1px solid var(--border-2);border-radius:16px;
+  padding:40px;width:100%;max-width:400px;
+}
+.login-icon{
+  width:52px;height:52px;border-radius:12px;background:var(--red-soft);border:1px solid var(--red-border);
+  display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:22px;
+}
+.login-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--text-2);margin-bottom:28px;line-height:1.6;}
+.form-group{margin-bottom:14px;}
+.form-lbl{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px;}
+.form-input{
+  width:100%;padding:11px 14px;background:var(--surface-2);
+  border:1px solid var(--border-2);border-radius:var(--radius-sm);
+  color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;
+  outline:none;transition:border-color .2s;
+}
+.form-input:focus{border-color:var(--red);}
+.form-input::placeholder{color:var(--text-3);}
+.login-btn{
+  width:100%;padding:12px;background:var(--red);border:none;border-radius:var(--radius-sm);
+  color:#fff;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;
+  cursor:pointer;transition:background .18s;margin-top:6px;
+}
+.login-btn:hover{background:var(--red-2);}
+.login-error{font-size:12px;color:#f87171;margin-top:10px;text-align:center;min-height:16px;}
+.login-toggle{font-size:12px;color:var(--text-3);text-align:center;margin-top:16px;}
+.login-toggle a{color:var(--red);cursor:pointer;font-weight:500;text-decoration:none;}
+.login-toggle a:hover{text-decoration:underline;}
+
+/* Account dashboard */
+.account-dashboard{display:none;}
+.account-dashboard.visible{display:block;}
+.acc-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:28px;}
+.acc-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;}
+.acc-sub{font-size:13px;color:var(--text-2);margin-top:3px;}
+.logout-btn{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
+  border:1px solid var(--border-2);border-radius:var(--radius-sm);
+  background:transparent;color:var(--text-2);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;
+}
+.logout-btn:hover{border-color:#f87171;color:#f87171;}
+
+/* Sections inside account */
+.acc-section{
+  background:var(--surface);border:1px solid var(--border-2);border-radius:var(--radius);
+  padding:26px;margin-bottom:18px;
+}
+.acc-section-title{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.acc-section-sub{font-size:12px;color:var(--text-3);margin-bottom:20px;}
+
+/* Client panel (non-admin) */
+.client-info{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.ci-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;}
+.ci-val{font-family:'DM Mono',monospace;font-size:22px;color:var(--text);margin-bottom:4px;}
+.ci-lbl{font-size:11px;color:var(--text-3);}
+.plan-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;font-size:12px;font-weight:600;}
+.plan-active{background:var(--green-soft);color:var(--green);border:1px solid rgba(0,184,107,.2);}
+.plan-inactive{background:var(--surface-3);color:var(--text-3);border:1px solid var(--border);}
+.renew-btn{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 18px;
+  border-radius:var(--radius-sm);border:none;background:var(--red);color:#fff;
+  font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;
+  transition:background .15s;margin-top:12px;
+}
+.renew-btn:hover{background:var(--red-2);}
+
+/* Admin section (only for admin user) */
+.admin-section{display:none;}
+.admin-section.visible{display:block;}
+.drop-zone{
+  border:2px dashed var(--border-2);border-radius:var(--radius);padding:36px;
+  text-align:center;cursor:pointer;transition:all .2s;position:relative;
+}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--red);background:var(--red-soft);}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.drop-icon{font-size:28px;margin-bottom:8px;}
+.drop-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.drop-sub{font-size:12px;color:var(--text-3);}
+.drop-sub span{color:var(--red);font-weight:600;}
+.upload-progress{margin-top:14px;display:none;}
+.progress-bar-wrap{height:3px;background:var(--surface-3);border-radius:99px;overflow:hidden;margin-bottom:8px;}
+.progress-bar{height:100%;background:var(--red);border-radius:99px;width:0;transition:width .3s;}
+.progress-text{font-size:11px;color:var(--text-3);}
+.upload-result{margin-top:14px;padding:12px 14px;border-radius:var(--radius-sm);display:none;font-size:13px;}
+.upload-result.success{background:var(--green-soft);border:1px solid rgba(0,184,107,.2);color:var(--green);}
+.upload-result.error{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);color:#f87171;}
+.format-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:14px;}
+.format-table th{padding:8px 12px;background:var(--surface-2);text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);}
+.format-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text-2);}
+.format-table td:first-child{color:var(--text);font-weight:600;font-family:'DM Mono',monospace;font-size:11px;}
+.format-table tr:last-child td{border-bottom:none;}
+.req-badge{display:inline-block;padding:1px 7px;border-radius:99px;font-size:9px;font-weight:700;}
+.req-badge.req{background:var(--red-soft);color:var(--red);}
+.req-badge.opt{background:var(--surface-3);color:var(--text-3);}
+.admin-stats-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.asm-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;}
+.asm-val{font-family:'DM Mono',monospace;font-size:24px;color:var(--text);margin-bottom:4px;}
+.asm-lbl{font-size:11px;color:var(--text-3);}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius);
+  padding:12px 18px;font-size:13px;font-weight:500;
+  box-shadow:var(--shadow-lg);transform:translateY(110px);opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:rgba(0,184,107,.3);color:var(--green);}
+.toast.error{border-color:rgba(248,113,113,.3);color:#f87171;}
+
+/* Responsive */
+@media(max-width:840px){
+  .stats-bar{grid-template-columns:1fr 1fr 1fr;}
+  .client-info{grid-template-columns:1fr 1fr;}
+  .admin-stats-mini{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:580px){
+  .stats-bar{grid-template-columns:1fr;}
+  .nav{padding:0 16px;}
+  .search-section,.filters-row,.table-wrap,.results-row,.account-page{padding-left:16px;padding-right:16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="logo" onclick="showPage('main')"><div class="logo-dot"></div>BuscaPro</div>
+  <div class="nav-sep"></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('main')">🔍 Produtos</button>
+    <button class="nav-tab" id="accountTab" onclick="showPage('account')">Login</button>
+  </div>
+  <div class="nav-right">
+    <div class="sync-pill" id="syncPill" title="Status da sincronização">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncLabel">Offline</span>
+    </div>
+    <div class="dollar-pill" id="dollarPill">
+      <span>🇺🇸</span>
+      <span class="dollar-val" id="dollarVal">—</span>
+      <span class="dollar-chg" id="dollarChg"></span>
+      <span class="dollar-dot err" id="dollarDot"></span>
+    </div>
+    <button class="account-btn" id="accountNavBtn" onclick="showPage('account')">
+      🔐 Login
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════ MAIN PAGE ═══════════════ -->
+<div id="page-main" class="page active">
+
+  <!-- 3 STAT CARDS -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-lbl">Produtos</div>
+      <div class="stat-val" id="statTotal">0</div>
+      <div class="stat-sub">itens no catálogo</div>
+      <div class="stat-icon">📦</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-lbl">Fornecedores</div>
+      <div class="stat-val" id="statForn">0</div>
+      <div class="stat-sub">ativos hoje</div>
+      <div class="stat-icon">🏪</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-lbl">Clientes Ativos</div>
+      <div class="stat-val">78</div>
+      <div class="stat-sub">assinantes da plataforma</div>
+      <div class="stat-icon">👥</div>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-section">
+    <div class="search-outer" id="searchOuter">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="Digite o modelo para ver fornecedores e preços..." autocomplete="off">
+      <div class="autocomplete-dropdown" id="acDropdown"></div>
+    </div>
+    <div class="quick-filters">
+      <button class="qf-btn active" data-tipo="todos" onclick="setTipo(this)">Todos</button>
+      <button class="qf-btn" data-tipo="LACRADO" onclick="setTipo(this)">📦 Lacrado</button>
+      <button class="qf-btn" data-tipo="SEMI-NOVO" onclick="setTipo(this)">♻️ Semi-novo</button>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters-row">
+    <div class="filter-group">
+      <label class="filter-lbl">Data</label>
+      <input type="date" class="date-input" id="fDate" onchange="applyFilters()" title="Filtrar por dia">
+    </div>
+    <div class="filter-group">
+      <label class="filter-lbl">Categoria</label>
+      <select id="fCat" onchange="applyFilters()"><option value="">Todas</option></select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-lbl">Storage</label>
+      <select id="fStorage" onchange="applyFilters()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-lbl">Cor</label>
+      <select id="fCor" onchange="applyFilters()"><option value="">Todas</option></select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-lbl">Região</label>
+      <select id="fRegiao" onchange="applyFilters()"><option value="">Todas</option></select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-lbl">Fornecedor</label>
+      <select id="fForn" onchange="applyFilters()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-lbl">Local</label>
+      <select id="fLocal" onchange="applyFilters()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-spacer"></div>
+    <button class="verified-pill" id="verifiedPill" onclick="toggleVerified(this)">
+      <span class="vdot"></span> Verificados
+    </button>
+    <button class="clear-btn" onclick="clearAllFilters()">Limpar filtros</button>
+    <div style="display:flex;align-items:center;gap:5px;">
+      <label class="filter-lbl">Ordenar</label>
+      <select id="sortSelect" onchange="applyFilters()">
+        <option value="preco_asc">Menor Preço</option>
+        <option value="preco_desc">Maior Preço</option>
+        <option value="prod_az">Produto A-Z</option>
+        <option value="forn_az">Fornecedor A-Z</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-row">
+    <span class="results-count"><b id="resultsCount">0</b> produtos encontrados</span>
+  </div>
+
+  <!-- COMPARE — só aparece quando há busca ativa -->
+  <div class="cmp-block" id="cmpBlock">
+    <div class="cmp-head">
+      <div>
+        <span class="cmp-title" id="cmpTitle"></span>
+        <div class="cmp-subtitle" id="cmpSubtitle"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="cmp-range" id="cmpRange"></span>
+        <button class="cmp-close" onclick="closeCmp()" title="Fechar">×</button>
+      </div>
+    </div>
+    <div class="cmp-cards" id="cmpCards"></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('produto')">Produto <span style="opacity:.4;font-size:9px;">↕</span></th>
+          <th onclick="sortBy('fornecedor')">Fornecedor <span style="opacity:.4;font-size:9px;">↕</span></th>
+          <th>Storage</th>
+          <th>Cor</th>
+          <th>Tipo</th>
+          <th>Região</th>
+          <th onclick="sortBy('preco')" style="text-align:right">Preço <span style="opacity:.4;font-size:9px;">↕</span></th>
+          <th style="text-align:right">Contato</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="no-results" id="noResults" style="display:none">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.25;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <p>Nenhum produto encontrado com esses filtros.</p>
+    </div>
+  </div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- ═══════════════ ACCOUNT PAGE ═══════════════ -->
+<div id="page-account" class="page">
+
+  <!-- LOGIN FORM -->
+  <div class="login-wrap" id="loginWrap">
+    <div class="login-card">
+      <div class="login-icon">👤</div>
+      <div class="login-title" id="loginTitle">Entrar na conta</div>
+      <div class="login-sub" id="loginSub">Acesse sua conta para gerenciar sua assinatura e configurações.</div>
+
+      <div class="form-group" id="nameGroup" style="display:none;">
+        <label class="form-lbl">Nome completo</label>
+        <input class="form-input" id="regName" type="text" placeholder="Seu nome">
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Usuário</label>
+        <input class="form-input" id="loginUser" type="text" placeholder="usuário" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-lbl">Senha</label>
+        <input class="form-input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">Entrar →</button>
+      <div class="login-error" id="loginError"></div>
+      <div class="login-toggle" id="loginToggle">
+        Não tem conta? <a onclick="toggleRegister()">Criar conta</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT DASHBOARD -->
+  <div class="account-page">
+    <div class="account-dashboard" id="accountDash">
+
+      <div class="acc-header">
+        <div>
+          <div class="acc-title" id="accWelcome">Minha Conta</div>
+          <div class="acc-sub" id="accSubtitle">Gerencie sua assinatura e preferências.</div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()">Sair da conta →</button>
+      </div>
+
+      <!-- CLIENT INFO (shown for all users) -->
+      <div class="acc-section" id="clientSection">
+        <div class="acc-section-title">📋 Minha Assinatura</div>
+        <div class="acc-section-sub">Detalhes do seu plano atual.</div>
+        <div class="client-info">
+          <div class="ci-card">
+            <div class="ci-val" id="ciDias">17</div>
+            <div class="ci-lbl">dias restantes</div>
+          </div>
+          <div class="ci-card">
+            <div class="ci-val">BuscaPro</div>
+            <div class="ci-lbl">plano atual</div>
+          </div>
+          <div class="ci-card">
+            <div class="ci-val" id="ciStatus">—</div>
+            <div class="ci-lbl">status</div>
+          </div>
+        </div>
+        <span class="plan-badge plan-active" id="planBadge">● Ativo</span>
+        <br>
+        <button class="renew-btn">🔄 Renovar Plano</button>
+      </div>
+
+      <!-- ADMIN SECTION (only admin) -->
+      <div class="admin-section" id="adminSection">
+
+        <div class="acc-section">
+          <div class="acc-section-title">⚙️ Painel Administrativo</div>
+          <div class="acc-section-sub">Gerencie os dados da plataforma.</div>
+          <div class="admin-stats-mini">
+            <div class="asm-card">
+              <div class="asm-val" id="aStatTotal">0</div>
+              <div class="asm-lbl">Total de registros</div>
+            </div>
+            <div class="asm-card">
+              <div class="asm-val" id="aStatForn">0</div>
+              <div class="asm-lbl">Fornecedores únicos</div>
+            </div>
+            <div class="asm-card">
+              <div class="asm-val" id="aStatVerif">0</div>
+              <div class="asm-lbl">Verificados</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc-section">
+          <div class="acc-section-title">📤 Atualizar Base de Dados</div>
+          <div class="acc-section-sub">Faça upload de uma planilha XLSX para substituir todos os dados do buscador.</div>
+          <div class="drop-zone" id="dropZone"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="handleDrop(event)">
+            <input type="file" accept=".xlsx,.xls" onchange="handleFileInput(this)">
+            <div class="drop-icon">📊</div>
+            <div class="drop-title">Arraste a planilha aqui</div>
+            <div class="drop-sub">ou <span>clique para selecionar</span> um arquivo .xlsx</div>
+          </div>
+          <div class="upload-progress" id="uploadProgress">
+            <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+            <div class="progress-text" id="progressText">Processando...</div>
+          </div>
+          <div class="upload-result" id="uploadResult"></div>
+        </div>
+
+        <div class="acc-section">
+          <div class="acc-section-title">📋 Formato da Planilha</div>
+          <div class="acc-section-sub">Cabeçalhos aceitos (maiúsculas ou minúsculas):</div>
+          <table class="format-table">
+            <thead><tr><th>Coluna</th><th>Descrição</th><th>Tipo</th></tr></thead>
+            <tbody>
+              <tr><td>PRODUTO</td><td>Nome do produto</td><td><span class="req-badge req">Obrigatório</span></td></tr>
+              <tr><td>FORNECEDOR</td><td>Nome do fornecedor</td><td><span class="req-badge req">Obrigatório</span></td></tr>
+              <tr><td>PRECO</td><td>Preço em R$</td><td><span class="req-badge req">Obrigatório</span></td></tr>
+              <tr><td>WHATSAPP</td><td>Número do WhatsApp</td><td><span class="req-badge opt">Opcional</span></td></tr>
+              <tr><td>LOCAL</td><td>Localização da loja</td><td><span class="req-badge opt">Opcional</span></td></tr>
+              <tr><td>STORAGE</td><td>Capacidade (128GB...)</td><td><span class="req-badge opt">Opcional</span></td></tr>
+              <tr><td>COR</td><td>Cor do produto</td><td><span class="req-badge opt">Opcional</span></td></tr>
+              <tr><td>CATEGORIA</td><td>IPH, MCB, IPAD...</td><td><span class="req-badge opt">Opcional</span></td></tr>
+              <tr><td>TIPO</td><td>LACRADO ou SEMI-NOVO</td><td><span class="req-badge opt">Opcional</span></td></tr>
+              <tr><td>REGIAO</td><td>Nacional, Virtual...</td><td><span class="req-badge opt">Opcional</span></td></tr>
+              <tr><td>DATA</td><td>Data do registro (DD/MM/AAAA)</td><td><span class="req-badge opt">Opcional</span></td></tr>
+              <tr><td>VERIFICADO</td><td>SIM ou NÃO</td><td><span class="req-badge opt">Opcional</span></td></tr>
+              <tr><td>OBS</td><td>Observações adicionais</td><td><span class="req-badge opt">Opcional</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /admin-section -->
+    </div><!-- /account-dashboard -->
+  </div><!-- /account-page -->
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+let ALL_DATA = [
+  {p:"AirTag 1 Pack",f:"TALLA CELL 6603",l:"SHOPPING ORIENTAL",w:"",s:"",c:"",cat:"ACSS",t:"LACRADO",r:"",pr:140,v:"NÃO",obs:"",date:"2026-04-22"},
+  {p:"AirTag 1 Pack",f:"BAGDA 0437",l:"MEGA POLO BRÁS",w:"",s:"",c:"",cat:"ACSS",t:"LACRADO",r:"",pr:145,v:"NÃO",obs:"",date:"2026-04-22"},
+  {p:"AirTag 1 Pack",f:"DAYANA 0693",l:"GALERIA PAGÉ",w:"",s:"",c:"",cat:"ACSS",t:"LACRADO",r:"",pr:145,v:"NÃO",obs:"",date:"2026-04-21"},
+  {p:"AirTag 1 Pack",f:"PHONE LINK 9823",l:"GALERIA PAGÉ",w:"",s:"",c:"",cat:"ACSS",t:"LACRADO",r:"",pr:150,v:"SIM",obs:"",date:"2026-04-21"},
+  {p:"AirTag 1 Pack",f:"CLARICELL 8556",l:"SHOPPING ORIENTAL",w:"",s:"",c:"",cat:"ACSS",t:"LACRADO",r:"",pr:150,v:"SIM",obs:"",date:"2026-04-20"},
+  {p:"AirTag 1 Pack",f:"RED CELL 5519",l:"SHOPPING ORIENTAL",w:"",s:"",c:"",cat:"ACSS",t:"LACRADO",r:"",pr:150,v:"NÃO",obs:"",date:"2026-04-20"},
+  {p:"AirTag 1 Pack",f:"BRUNA TM CELULARES 7618",l:"SHOPPING ORIENTAL",w:"",s:"",c:"",cat:"ACSS",t:"LACRADO",r:"",pr:150,v:"NÃO",obs:"",date:"2026-04-19"},
+  {p:"iPhone 16 Pro Max",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"1TB",c:"Natural Titanium",cat:"IPH",t:"SEMI-NOVO",r:"",pr:5450,v:"NÃO",obs:"Vitrine",date:"2026-04-22"},
+  {p:"iPhone 16 Pro Max",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"512GB",c:"Black Titanium",cat:"IPH",t:"SEMI-NOVO",r:"",pr:5290,v:"NÃO",obs:"Vitrine",date:"2026-04-22"},
+  {p:"iPhone 16 Pro",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"256GB",c:"Black",cat:"IPH",t:"SEMI-NOVO",r:"",pr:4200,v:"NÃO",obs:"",date:"2026-04-21"},
+  {p:"iPhone 15 Pro Max",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"256GB",c:"Black Titanium",cat:"IPH",t:"SEMI-NOVO",r:"",pr:3780,v:"NÃO",obs:"Bateria 83-99%",date:"2026-04-21"},
+  {p:"iPhone 15 Pro Max",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"256GB",c:"Deep Blue",cat:"IPH",t:"SEMI-NOVO",r:"",pr:3780,v:"NÃO",obs:"Bateria 83-99%",date:"2026-04-20"},
+  {p:"iPhone 15 Pro",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"256GB",c:"Black Titanium",cat:"IPH",t:"SEMI-NOVO",r:"",pr:3650,v:"NÃO",obs:"Vitrine",date:"2026-04-20"},
+  {p:"iPhone 15",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"128GB",c:"Black",cat:"IPH",t:"SEMI-NOVO",r:"",pr:2520,v:"NÃO",obs:"Vitrine",date:"2026-04-19"},
+  {p:"iPhone 14 Pro Max",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"256GB",c:"Black",cat:"IPH",t:"SEMI-NOVO",r:"",pr:4600,v:"NÃO",obs:"CPO 1 ano garantia",date:"2026-04-19"},
+  {p:"iPhone 13",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"128GB",c:"Teal",cat:"IPH",t:"SEMI-NOVO",r:"",pr:1750,v:"NÃO",obs:"Vitrine",date:"2026-04-18"},
+  {p:"iPhone 11 Pro",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"64GB",c:"Black",cat:"IPH",t:"SEMI-NOVO",r:"",pr:1490,v:"NÃO",obs:"Vitrine",date:"2026-04-18"},
+  {p:"MacBook Air M5 13",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"512GB",c:"Midnight",cat:"MCB",t:"LACRADO",r:"",pr:7150,v:"NÃO",obs:"16GB RAM",date:"2026-04-22"},
+  {p:"MacBook Air M4 13",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"512GB",c:"Silver",cat:"MCB",t:"LACRADO",r:"",pr:7470,v:"NÃO",obs:"16GB RAM",date:"2026-04-22"},
+  {p:"MacBook Air M4 15",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"512GB",c:"Blue Celeste",cat:"MCB",t:"LACRADO",r:"",pr:9060,v:"NÃO",obs:"16GB RAM",date:"2026-04-21"},
+  {p:"MacBook Neo 13",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"256GB",c:"Blush",cat:"MCB",t:"LACRADO",r:"",pr:4490,v:"NÃO",obs:"8GB RAM",date:"2026-04-21"},
+  {p:"iPad 11",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"128GB",c:"Deep Blue",cat:"IPAD",t:"LACRADO",r:"",pr:2040,v:"NÃO",obs:"A16 Wi-Fi",date:"2026-04-20"},
+  {p:"AirPods 4",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"",c:"White",cat:"PODS",t:"LACRADO",r:"",pr:680,v:"NÃO",obs:"",date:"2026-04-20"},
+  {p:"AirPods 4 ANC",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"",c:"White",cat:"PODS",t:"LACRADO",r:"",pr:920,v:"NÃO",obs:"",date:"2026-04-19"},
+  {p:"Apple Watch Series 11 46mm",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"46mm",c:"Jet Black",cat:"PLG",t:"LACRADO",r:"",pr:2290,v:"NÃO",obs:"GPS",date:"2026-04-19"},
+  {p:"Apple Pencil Pro",f:"HM COMPANY",l:"GALERIA PAGÉ",w:"11911514851",s:"",c:"White",cat:"ACCC",t:"LACRADO",r:"",pr:710,v:"NÃO",obs:"A2538",date:"2026-04-18"},
+];
+
+const CAT_LABELS = {IPH:'iPhone',MCB:'MacBook',IPAD:'iPad',PODS:'AirPods',PLG:'Apple Watch',ACCC:'Acessório',ACSS:'Acessório'};
+const ADMIN_USER = 'admin';
+const ADMIN_PASS = 'buscapro2024';
+// Usuários cliente de exemplo
+const USERS = {
+  'admin': {pass:'buscapro2024', name:'Administrador', isAdmin:true, dias:999},
+  'lucas': {pass:'lucas123', name:'Lucas', isAdmin:false, dias:17},
+  'cliente': {pass:'senha123', name:'Cliente Demo', isAdmin:false, dias:5},
+};
+
+const PER_PAGE = 50;
+let currentPage = 1;
+let filtered = [...ALL_DATA];
+let tipoFilter = 'todos';
+let sortField = 'preco_asc';
+let verifiedOnly = false;
+let acFocused = -1;
+let currentUser = null;
+let isRegisterMode = false;
+
+// ═══════════════════════════════════════════
+// NAV / PAGES
+// ═══════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(id==='main') document.querySelectorAll('.nav-tab')[0].classList.add('active');
+  else document.querySelectorAll('.nav-tab')[1].classList.add('active');
+}
+
+function updateNavAccount() {
+  const tab = document.getElementById('accountTab');
+  const btn = document.getElementById('accountNavBtn');
+  if(currentUser) {
+    tab.textContent = '👤 Minha Conta';
+    btn.className = 'account-btn logged';
+    btn.innerHTML = `<div class="av-circle">${currentUser.name[0].toUpperCase()}</div> ${currentUser.name.split(' ')[0]}`;
+  } else {
+    tab.textContent = '👤 Login';
+    btn.className = 'account-btn';
+    btn.innerHTML = '🔐 Login';
+  }
+}
+
+// ═══════════════════════════════════════════
+// DOLLAR LIVE
+// ═══════════════════════════════════════════
+async function fetchDollar() {
+  try {
+    const res = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
+    const d = await res.json();
+    const usd = d.USDBRL;
+    const rate = parseFloat(usd.bid);
+    const pct = parseFloat(usd.pctChange);
+    document.getElementById('dollarVal').textContent = 'R$ '+rate.toFixed(2).replace('.',',');
+    const el = document.getElementById('dollarChg');
+    el.textContent = (pct>=0?'+':'')+pct.toFixed(2)+'%';
+    el.className = 'dollar-chg '+(pct>=0?'up':'dn');
+    document.getElementById('dollarDot').className = 'dollar-dot';
+  } catch(e) {
+    document.getElementById('dollarVal').textContent = 'N/D';
+    document.getElementById('dollarDot').className = 'dollar-dot err';
+  }
+}
+fetchDollar();
+setInterval(fetchDollar, 60000);
+
+// ═══════════════════════════════════════════
+// AUTOCOMPLETE
+// ═══════════════════════════════════════════
+const searchInput = document.getElementById('searchInput');
+const acDropdown = document.getElementById('acDropdown');
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(window._st);
+  window._st = setTimeout(() => { renderAutocomplete(); applyFilters(); }, 180);
+});
+
+searchInput.addEventListener('keydown', e => {
+  const items = acDropdown.querySelectorAll('.ac-item');
+  if(e.key==='ArrowDown'){e.preventDefault();acFocused=Math.min(acFocused+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('focused',i===acFocused));}
+  else if(e.key==='ArrowUp'){e.preventDefault();acFocused=Math.max(acFocused-1,-1);items.forEach((el,i)=>el.classList.toggle('focused',i===acFocused));}
+  else if(e.key==='Enter'){if(acFocused>=0&&items[acFocused])items[acFocused].click();else closeAC();}
+  else if(e.key==='Escape')closeAC();
+});
+
+document.addEventListener('click', e => {
+  if(!document.getElementById('searchOuter').contains(e.target)) closeAC();
+});
+
+function closeAC(){acDropdown.classList.remove('open');acFocused=-1;}
+
+function renderAutocomplete() {
+  const q = searchInput.value.trim();
+  if(q.length < 2){closeAC();return;}
+  const ql = q.toLowerCase();
+  const counts = {};
+  ALL_DATA.forEach(d => {
+    if(`${d.p} ${d.f} ${d.l}`.toLowerCase().includes(ql))
+      counts[d.p] = (counts[d.p]||0)+1;
+  });
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(!sorted.length){
+    acDropdown.innerHTML='<div class="ac-empty">Nenhum produto encontrado</div>';
+  } else {
+    const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi');
+    acDropdown.innerHTML = sorted.map(([name,count])=>{
+      const hl = name.replace(re,'<mark>$1</mark>');
+      const icon = name.toLowerCase().includes('iphone')?'📱':name.toLowerCase().includes('mac')?'💻':name.toLowerCase().includes('ipad')?'📱':name.toLowerCase().includes('airpod')?'🎧':name.toLowerCase().includes('watch')?'⌚':'📦';
+      return `<div class="ac-item" onclick="selectAC('${name.replace(/'/g,"\\'")}')">
+        <span class="ac-item-icon">${icon}</span>
+        <span class="ac-item-name">${hl}</span>
+        <span class="ac-item-count">${count} forn${count!==1?'ecedores':'ecedor'}</span>
+      </div>`;
+    }).join('');
+  }
+  acDropdown.classList.add('open');
+  acFocused=-1;
+}
+
+function selectAC(name){searchInput.value=name;closeAC();applyFilters();}
+
+// ═══════════════════════════════════════════
+// FILTERS
+// ═══════════════════════════════════════════
+function populateFilters(){
+  const storages=[...new Set(ALL_DATA.map(d=>d.s).filter(Boolean))].sort((a,b)=>{
+    const order=['64GB','128GB','256GB','512GB','1TB','2TB','40mm','42mm','44mm','46mm','49mm'];
+    return (order.indexOf(a)<0?99:order.indexOf(a))-(order.indexOf(b)<0?99:order.indexOf(b));
+  });
+  const cores=[...new Set(ALL_DATA.map(d=>d.c).filter(Boolean))].sort();
+  const regioes=[...new Set(ALL_DATA.map(d=>d.r).filter(Boolean))].sort();
+  const forn=[...new Set(ALL_DATA.map(d=>d.f))].sort();
+  const local=[...new Set(ALL_DATA.map(d=>d.l))].sort();
+  const cats=[...new Set(ALL_DATA.map(d=>d.cat).filter(Boolean))].sort();
+
+  const set=(id,arr,lbl)=>{
+    const el=document.getElementById(id);
+    el.innerHTML=`<option value="">${lbl}</option>`;
+    arr.forEach(v=>el.innerHTML+=`<option value="${v}">${CAT_LABELS[v]||v}</option>`);
+  };
+  set('fCat',cats,'Todas');set('fStorage',storages,'Todos');set('fCor',cores,'Todas');
+  set('fRegiao',regioes,'Todas');set('fForn',forn,'Todos');set('fLocal',local,'Todos');
+}
+
+function setTipo(btn){
+  document.querySelectorAll('[data-tipo]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  tipoFilter=btn.dataset.tipo;
+  currentPage=1;applyFilters();
+}
+
+function toggleVerified(btn){
+  verifiedOnly=!verifiedOnly;
+  btn.classList.toggle('active',verifiedOnly);
+  currentPage=1;applyFilters();
+}
+
+function clearAllFilters(){
+  searchInput.value='';
+  document.getElementById('fDate').value='';
+  ['fCat','fStorage','fCor','fRegiao','fForn','fLocal'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sortSelect').value='preco_asc';
+  verifiedOnly=false;document.getElementById('verifiedPill').classList.remove('active');
+  tipoFilter='todos';document.querySelectorAll('[data-tipo]').forEach(b=>b.classList.remove('active'));
+  document.querySelector('[data-tipo="todos"]').classList.add('active');
+  currentPage=1;closeAC();applyFilters();
+  document.getElementById('cmpBlock').classList.remove('visible');
+}
+
+function applyFilters(){
+  const q=searchInput.value.toLowerCase().trim();
+  const cat=document.getElementById('fCat').value;
+  const stor=document.getElementById('fStorage').value;
+  const cor=document.getElementById('fCor').value;
+  const reg=document.getElementById('fRegiao').value;
+  const forn=document.getElementById('fForn').value;
+  const local=document.getElementById('fLocal').value;
+  const dateDay=document.getElementById('fDate').value;
+  sortField=document.getElementById('sortSelect').value;
+
+  filtered=ALL_DATA.filter(d=>{
+    if(verifiedOnly&&d.v!=='SIM')return false;
+    if(tipoFilter!=='todos'&&d.t!==tipoFilter)return false;
+    if(cat&&d.cat!==cat)return false;
+    if(stor&&d.s!==stor)return false;
+    if(cor&&d.c!==cor)return false;
+    if(reg&&d.r!==reg)return false;
+    if(forn&&d.f!==forn)return false;
+    if(local&&d.l!==local)return false;
+    // Date filter — exact day match
+    if(dateDay&&d.date&&d.date!==dateDay)return false;
+    if(q){
+      const hay=`${d.p} ${d.f} ${d.l} ${d.s} ${d.c} ${d.cat} ${d.t} ${d.r} ${d.obs}`.toLowerCase();
+      if(!hay.includes(q))return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a,b)=>{
+    if(sortField==='preco_asc')return a.pr-b.pr;
+    if(sortField==='preco_desc')return b.pr-a.pr;
+    if(sortField==='prod_az')return a.p.localeCompare(b.p);
+    if(sortField==='forn_az')return a.f.localeCompare(b.f);
+    return 0;
+  });
+
+  currentPage=1;
+  renderTable();
+
+  // Compare block: only show when there's an active text search
+  if(q.length>=2){
+    renderComparison();
+  } else {
+    document.getElementById('cmpBlock').classList.remove('visible');
+  }
+  updateStats();
+}
+
+// ═══════════════════════════════════════════
+// TABLE RENDER
+// ═══════════════════════════════════════════
+function colorDot(c){
+  const map={Black:'#1a1a1a',Midnight:'#18223a','Space Black':'#111',Graphite:'#555',White:'#f0f0f0',Starlight:'#f5e9d0',Silver:'#c0c0c0','Natural Titanium':'#b8a99a',Gold:'#c9a84c',Pink:'#ffb6c1',Red:'#e01c3b',Purple:'#8a2be2',Blue:'#4169e1','Deep Blue':'#003087','Blue Celeste':'#b0e0e6',Teal:'#008080',Green:'#228b22','Midnight Green':'#1b4332',Blush:'#e8a398',Citrus:'#f5c842',Indigo:'#3d0075','Jet Black':'#222'};
+  const bg=map[c]||'#666';
+  return `<span class="dot" style="background:${bg}"></span>`;
+}
+function fmt(n){return 'R$ '+n.toLocaleString('pt-BR');}
+
+function renderTable(){
+  const start=(currentPage-1)*PER_PAGE;
+  const page=filtered.slice(start,start+PER_PAGE);
+  const body=document.getElementById('tableBody');
+  const noR=document.getElementById('noResults');
+
+  if(!filtered.length){body.innerHTML='';noR.style.display='block';document.getElementById('pagination').innerHTML='';document.getElementById('resultsCount').textContent='0';return;}
+  noR.style.display='none';
+
+  const prices=filtered.map(d=>d.pr);
+  const pMin=Math.min(...prices),pMax=Math.max(...prices);
+  const pRange=pMax-pMin||1;
+
+  body.innerHTML=page.map(d=>{
+    const rel=(d.pr-pMin)/pRange;
+    const cls=rel<0.2?'price-best':rel>0.8?'price-hi':'price-mid';
+    const verif=d.v==='SIM'?'<span class="badge badge-green">✓ Verif</span>':'';
+    const tipoCls=d.t==='LACRADO'?'badge-blue':'badge-amber';
+    const waTxt=`Olá! Vi no BuscaPro: ${d.p}${d.s?' '+d.s:''}${d.c?' '+d.c:''} por ${fmt(d.pr)}. Ainda disponível?`;
+    const waHref=d.w?`https://wa.me/55${d.w.replace(/\D/g,'')}?text=${encodeURIComponent(waTxt)}`:'#';
+    return `<tr onclick="rowClick('${d.p.replace(/'/g,"\\'")}','${(d.s||'').replace(/'/g,"\\'")}','${(d.c||'').replace(/'/g,"\\'")}')">
+      <td><div class="prod-name">${d.p}</div>${d.obs?`<div class="prod-obs">${d.obs}</div>`:''}</td>
+      <td><div class="sup-name">${d.f} ${verif}</div><div class="sup-loc">${d.l||'—'}</div></td>
+      <td>${d.s||'—'}</td>
+      <td>${d.c?colorDot(d.c)+d.c:'—'}</td>
+      <td><span class="badge ${tipoCls}">${d.t||'—'}</span></td>
+      <td>${d.r||'—'}</td>
+      <td class="price-cell"><span class="price-val ${cls}">${fmt(d.pr)}</span></td>
+      <td style="text-align:right">${d.w?`<a href="${waHref}" target="_blank" class="wa-btn" onclick="event.stopPropagation()"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.094.541 4.065 1.487 5.782L.057 23.026a.75.75 0 0 0 .917.917l5.244-1.43A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.713 9.713 0 0 1-4.908-1.327l-.352-.208-3.645.994.993-3.535-.228-.364A9.72 9.72 0 0 1 2.25 12c0-5.376 4.374-9.75 9.75-9.75S21.75 6.624 21.75 12 17.376 21.75 12 21.75z"/></svg>WhatsApp</a>`:'<span style="color:var(--text-3);font-size:11px;">—</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('resultsCount').textContent=filtered.length;
+  renderPagination();
+}
+
+function rowClick(prod,stor,cor){
+  renderComparison(prod,stor,cor);
+  document.getElementById('cmpBlock').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function closeCmp(){
+  document.getElementById('cmpBlock').classList.remove('visible');
+}
+
+function renderComparison(prod, stor, cor) {
+  // ── Ordem de storage (menor → maior) ──
+  const storOrder = ['32GB','64GB','128GB','256GB','512GB','1TB','2TB','40mm','41mm','42mm','44mm','45mm','46mm','49mm'];
+  const storRank = s => { const i = storOrder.indexOf(s); return i < 0 ? 99 : i; };
+
+  // ── Se chamado sem args (busca por texto): deriva o produto mais frequente ──
+  if (!prod) {
+    // Pega todos os produtos no resultado filtrado atual
+    const prodCounts = {};
+    filtered.forEach(d => { prodCounts[d.p] = (prodCounts[d.p]||0)+1; });
+    // Escolhe o produto mais repetido
+    let bestProd = null, bestC = 0;
+    for (const [k, v] of Object.entries(prodCounts)) { if (v > bestC) { bestC = v; bestProd = k; } }
+    if (!bestProd) { document.getElementById('cmpBlock').classList.remove('visible'); return; }
+    prod = bestProd;
+    // Não fixa storage/cor — mostra as 6 mais baratas de qualquer variante
+    stor = null; cor = null;
+  }
+
+  // ── Pool: todos os itens com esse produto no resultado filtrado atual ──
+  let pool = filtered.filter(d => d.p === prod);
+  if (!pool.length) { document.getElementById('cmpBlock').classList.remove('visible'); return; }
+
+  // Se storage e cor foram especificados (clique numa linha), filtra por eles
+  if (stor) pool = pool.filter(d => d.s === stor);
+  if (cor)  pool = pool.filter(d => d.c === cor);
+
+  if (!pool.length) { document.getElementById('cmpBlock').classList.remove('visible'); return; }
+
+  // ── Estratégia: 6 opções mais baratas ──
+  // Prioriza: menor preço → menor storage → cor mais barata (menor preço médio dessa cor)
+  const colorAvg = {};
+  pool.forEach(d => {
+    if (!colorAvg[d.c]) colorAvg[d.c] = { sum: 0, n: 0 };
+    colorAvg[d.c].sum += d.pr; colorAvg[d.c].n++;
+  });
+  const colorScore = c => c ? (colorAvg[c] ? colorAvg[c].sum / colorAvg[c].n : 9999) : 9999;
+
+  const sorted = [...pool].sort((a, b) => {
+    if (a.pr !== b.pr) return a.pr - b.pr;           // 1º menor preço
+    const sd = storRank(a.s) - storRank(b.s);
+    if (sd !== 0) return sd;                           // 2º menor storage
+    return colorScore(a.c) - colorScore(b.c);         // 3º cor mais barata
+  });
+
+  const top6 = sorted.slice(0, 6);
+  const minP = top6[0].pr;
+  const maxP = top6[top6.length - 1].pr;
+
+  // ── Header ──
+  const titleParts = [prod];
+  if (stor) titleParts.push(stor);
+  if (cor)  titleParts.push(cor);
+  document.getElementById('cmpTitle').textContent = titleParts.join(' · ').toUpperCase();
+
+  const totalVariants = pool.length;
+  document.getElementById('cmpSubtitle').textContent =
+    `${totalVariants} opção${totalVariants!==1?'ões':''} encontrada${totalVariants!==1?'s':''} — exibindo as 6 mais baratas`;
+
+  document.getElementById('cmpRange').textContent =
+    `${fmt(minP)} — ${fmt(maxP)}`;
+
+  document.getElementById('cmpCards').innerHTML = top6.map((d, i) => {
+    const isBest = i === 0;
+    const diff = d.pr - minP;
+    const diffTxt = diff === 0
+      ? '<span class="pos">= referência</span>'
+      : `<span class="neg">+${fmt(diff).replace('R$ ','R$')}</span>`;
+    const pCls = isBest ? 'p-best' : (i === top6.length-1 && diff > 0 ? 'p-high' : 'p-mid');
+    const medals = ['🥇','🥈','🥉','4º','5º','6º'];
+    const specParts = [];
+    if (d.s && !stor) specParts.push(d.s);
+    if (d.c && !cor)  specParts.push(d.c);
+
+    return `<div class="cc${isBest?' best-cc':''}">
+      <div class="cc-rank">${medals[i]||''}</div>
+      ${isBest?'<div class="cc-tag">Menor preço</div>':''}
+      <div class="cc-supplier">${d.f}</div>
+      <div class="cc-loc">${d.l||''}${d.v==='SIM'?' · ✓ verif':''}</div>
+      ${specParts.length?`<div class="cc-spec">${specParts.join(' · ')}</div>`:''}
+      <div class="cc-price ${pCls}">${fmt(d.pr)}</div>
+      <div class="cc-meta">${d.r||d.t||'—'}</div>
+      <div class="cc-diff">${diffTxt}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('cmpBlock').classList.add('visible');
+}
+
+function renderPagination(){
+  const totalPages=Math.ceil(filtered.length/PER_PAGE);
+  const pg=document.getElementById('pagination');
+  if(totalPages<=1){pg.innerHTML='';return;}
+  const start=(currentPage-1)*PER_PAGE+1;
+  const end=Math.min(currentPage*PER_PAGE,filtered.length);
+  let html=`<span class="pg-info">${start}–${end} de ${filtered.length}</span><div style="display:flex;gap:4px;">`;
+  html+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+  for(let i=1;i<=totalPages;i++){
+    if(i===1||i===totalPages||Math.abs(i-currentPage)<=1)
+      html+=`<button class="pg-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    else if(Math.abs(i-currentPage)===2)
+      html+=`<button class="pg-btn" disabled style="pointer-events:none">…</button>`;
+  }
+  html+=`<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button></div>`;
+  pg.innerHTML=html;
+}
+
+function goPage(n){currentPage=n;renderTable();document.querySelector('.table-wrap').scrollIntoView({behavior:'smooth',block:'start'});}
+function sortBy(field){const map={preco:'preco_asc',produto:'prod_az',fornecedor:'forn_az'};sortField=map[field]||'preco_asc';document.getElementById('sortSelect').value=sortField;applyFilters();}
+
+function updateStats(){
+  const fornCount=new Set(ALL_DATA.map(d=>d.f)).size;
+  document.getElementById('statTotal').textContent=ALL_DATA.length;
+  document.getElementById('statForn').textContent=fornCount;
+  // Admin panel stats
+  const verifForn=new Set(ALL_DATA.filter(d=>d.v==='SIM').map(d=>d.f)).size;
+  document.getElementById('aStatTotal').textContent=ALL_DATA.length;
+  document.getElementById('aStatForn').textContent=fornCount;
+  document.getElementById('aStatVerif').textContent=verifForn;
+}
+
+// ═══════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════
+function toggleRegister(){
+  isRegisterMode=!isRegisterMode;
+  document.getElementById('nameGroup').style.display=isRegisterMode?'block':'none';
+  document.getElementById('loginTitle').textContent=isRegisterMode?'Criar conta':'Entrar na conta';
+  document.getElementById('loginSub').textContent=isRegisterMode?'Preencha os dados para criar sua conta.':'Acesse sua conta para gerenciar sua assinatura.';
+  document.getElementById('loginBtn').textContent=isRegisterMode?'Criar conta →':'Entrar →';
+  document.getElementById('loginToggle').innerHTML=isRegisterMode?'Já tem conta? <a onclick="toggleRegister()">Fazer login</a>':'Não tem conta? <a onclick="toggleRegister()">Criar conta</a>';
+  document.getElementById('loginError').textContent='';
+}
+
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginError');
+
+  if(isRegisterMode){
+    // Demo: just show success message (no real backend)
+    if(!u||!p){err.textContent='Preencha todos os campos.';return;}
+    showToast('Conta criada! (demo — use login existente)','success');
+    toggleRegister();
+    return;
+  }
+
+  const user=USERS[u];
+  if(user&&user.pass===p){
+    currentUser={...user,username:u};
+    err.textContent='';
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('accountDash').classList.add('visible');
+    document.getElementById('accWelcome').textContent=`Olá, ${user.name.split(' ')[0]} 👋`;
+    document.getElementById('accSubtitle').textContent=user.isAdmin?'Painel de administração do BuscaPro.':'Gerencie sua assinatura e preferências.';
+    document.getElementById('ciDias').textContent=user.dias;
+    document.getElementById('ciStatus').textContent=user.dias>0?'Ativo':'Expirado';
+    document.getElementById('planBadge').className='plan-badge '+(user.dias>0?'plan-active':'plan-inactive');
+    document.getElementById('planBadge').textContent=user.dias>0?'● Ativo':'● Expirado';
+    // Show/hide admin section
+    document.getElementById('adminSection').className='admin-section'+(user.isAdmin?' visible':'');
+    // Hide client section for admin
+    document.getElementById('clientSection').style.display=user.isAdmin?'none':'block';
+    updateNavAccount();
+    updateStats();
+    showToast(`Bem-vindo, ${user.name.split(' ')[0]}!`,'success');
+  } else {
+    err.textContent='Usuário ou senha incorretos.';
+    document.getElementById('loginPass').value='';
+  }
+}
+
+function doLogout(){
+  currentUser=null;
+  document.getElementById('loginWrap').style.display='flex';
+  document.getElementById('accountDash').classList.remove('visible');
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').textContent='';
+  if(isRegisterMode) toggleRegister();
+  updateNavAccount();
+  showPage('main');
+  showToast('Sessão encerrada.','success');
+}
+
+// ═══════════════════════════════════════════
+// XLSX UPLOAD
+// ═══════════════════════════════════════════
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file) processXLSX(file);
+}
+function handleFileInput(inp){const file=inp.files[0];if(file)processXLSX(file);inp.value='';}
+
+function processXLSX(file){
+  if(!file.name.match(/\.(xlsx|xls)$/i)){showResult('error','❌ Envie um arquivo .xlsx ou .xls');return;}
+  const prog=document.getElementById('uploadProgress');
+  const bar=document.getElementById('progressBar');
+  const progText=document.getElementById('progressText');
+  prog.style.display='block';
+  document.getElementById('uploadResult').style.display='none';
+  bar.style.width='20%';progText.textContent='Lendo arquivo...';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    bar.style.width='55%';progText.textContent='Processando...';
+    setTimeout(()=>{
+      try{
+        const data=new Uint8Array(e.target.result);
+        const wb=XLSX.read(data,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+        if(!rows.length) throw new Error('Planilha vazia.');
+        const keys=Object.keys(rows[0]);
+        const find=(...names)=>{for(const n of names){const k=keys.find(k=>k.toUpperCase()===n.toUpperCase());if(k)return k;}return null;};
+        const hm={prod:find('PRODUTO','PRODUCT'),forn:find('FORNECEDOR','SUPPLIER'),preco:find('PRECO','PREÇO','PRICE','VALOR'),wa:find('WHATSAPP','WA','TELEFONE'),local:find('LOCAL','LOJA'),storage:find('STORAGE','CAPACIDADE'),cor:find('COR','COLOR'),cat:find('CATEGORIA','CATEGORY','CAT'),tipo:find('TIPO','TYPE'),regiao:find('REGIAO','REGIÃO','REGION'),verif:find('VERIFICADO','VERIFIED'),obs:find('OBS','OBSERVACAO','OBSERVAÇÃO'),date:find('DATA','DATE')};
+        if(!hm.prod||!hm.preco) throw new Error('Colunas obrigatórias não encontradas: PRODUTO e PRECO.');
+        const newData=rows.map(r=>({
+          p:String(r[hm.prod]||'').trim(),f:hm.forn?String(r[hm.forn]||'').trim():'',
+          l:hm.local?String(r[hm.local]||'').trim():'',w:hm.wa?String(r[hm.wa]||'').replace(/\D/g,''):'',
+          s:hm.storage?String(r[hm.storage]||'').trim():'',c:hm.cor?String(r[hm.cor]||'').trim():'',
+          cat:hm.cat?String(r[hm.cat]||'').trim().toUpperCase():'',t:hm.tipo?String(r[hm.tipo]||'').trim().toUpperCase():'',
+          r:hm.regiao?String(r[hm.regiao]||'').trim():'',
+          pr:parseFloat(String(r[hm.preco]||'0').replace(',','.').replace(/[^\d.]/g,''))||0,
+          v:hm.verif?String(r[hm.verif]||'').trim().toUpperCase():'NÃO',
+          obs:hm.obs?String(r[hm.obs]||'').trim():'',
+          date:hm.date?String(r[hm.date]||'').trim():'',
+        })).filter(d=>d.p&&d.pr>0);
+        if(!newData.length) throw new Error('Nenhum registro válido encontrado.');
+        ALL_DATA=[...newData];filtered=[...ALL_DATA];
+        populateFilters();applyFilters();
+        bar.style.width='100%';progText.textContent='Concluído!';
+        setTimeout(()=>prog.style.display='none',700);
+        showResult('success',`✅ ${newData.length} registros importados com sucesso!`);
+        showToast(`${newData.length} produtos importados!`,'success');
+        saveToFirebase();
+      }catch(err){prog.style.display='none';showResult('error','❌ '+err.message);showToast('Erro ao importar','error');}
+    },300);
+  };
+  reader.readAsArrayBuffer(file);
+}
+function showResult(type,msg){const el=document.getElementById('uploadResult');el.className='upload-result '+type;el.textContent=msg;el.style.display='block';}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+type+' show';
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ═══════════════════════════════════════════
+// FIREBASE — PERSISTÊNCIA EM TEMPO REAL
+// ═══════════════════════════════════════════
+// ⚠️ Substitua pelos valores do seu projeto Firebase:
+// console.firebase.google.com → Criar projeto → Realtime Database
+const FB_CONFIG = {
+  apiKey: "AIzaSyC8bUdYg_iR4ocqIcQrN8zo_yX0YScnDEA",
+  authDomain: "buscador-revend.firebaseapp.com",
+  databaseURL: "https://buscador-revend-default-rtdb.firebaseio.com",
+  projectId: "buscador-revend",
+  storageBucket: "buscador-revend.firebasestorage.app",
+  messagingSenderId: "370756256396",
+  appId: "1:370756256396:web:2ff6326a7df0d6bb1371a9",
+  measurementId: "G-3RMLNEEC8L"
+};
+
+let fbDb = null;
+let fbRef = null;
+let fbReady = false;
+
+function setSyncStatus(state, label) {
+  const pill = document.getElementById('syncPill');
+  const dot  = document.getElementById('syncDot');
+  const lbl  = document.getElementById('syncLabel');
+  pill.className = 'sync-pill ' + state;
+  lbl.textContent = label;
+}
+
+function initFirebase() {
+  // Verifica se o config foi preenchido
+  if (FB_CONFIG.apiKey === 'COLE_SUA_API_KEY_AQUI') {
+    setSyncStatus('', 'Config pendente');
+    return;
+  }
+  try {
+    const app = firebase.initializeApp(FB_CONFIG);
+    fbDb  = firebase.database(app);
+    fbRef = fbDb.ref('buscapro/dados');
+
+    setSyncStatus('syncing', 'Conectando...');
+
+    // Escuta alterações em tempo real
+    fbRef.on('value', snap => {
+      const data = snap.val();
+      if (data && Array.isArray(data) && data.length > 0) {
+        ALL_DATA = data;
+        filtered = [...ALL_DATA];
+        populateFilters();
+        applyFilters();
+        setSyncStatus('online', 'Online · ' + ALL_DATA.length + ' produtos');
+        fbReady = true;
+      } else {
+        // Primeira vez: salva os dados iniciais no Firebase
+        if (!fbReady) {
+          fbRef.set(ALL_DATA);
+          fbReady = true;
+        }
+        setSyncStatus('online', 'Online');
+      }
+    }, err => {
+      console.error('Firebase error:', err);
+      setSyncStatus('error', 'Erro conexão');
+    });
+
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    setSyncStatus('error', 'Erro config');
+  }
+}
+
+// Salva no Firebase após importar planilha
+function saveToFirebase() {
+  if (!fbRef) return;
+  setSyncStatus('syncing', 'Salvando...');
+  fbRef.set(ALL_DATA)
+    .then(() => setSyncStatus('online', 'Salvo · ' + ALL_DATA.length + ' produtos'))
+    .catch(e => { console.error(e); setSyncStatus('error', 'Erro ao salvar'); });
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+populateFilters();
+applyFilters();
+initFirebase();
+</script>
+</body>
+</html>
