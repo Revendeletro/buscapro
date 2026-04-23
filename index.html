@@ -3182,6 +3182,47 @@ const _pad = n => String(n).padStart(2,'0');
 document.getElementById('fDate').value = `${_today.getFullYear()}-${_pad(_today.getMonth()+1)}-${_pad(_today.getDate())}`;
 applyFilters();
 initFirebase();
+
+// ═══════════════════════════════════════════
+// SPLASH LOGIN (tela inicial de acesso)
+// ═══════════════════════════════════════════
+function doSplashLogin() {
+  const u = document.getElementById('splashUser').value.trim();
+  const p = document.getElementById('splashPass').value;
+  const err = document.getElementById('splashError');
+
+  if (!u || !p) { err.textContent = 'Preencha usuário e senha.'; return; }
+
+  const user = USERS[u];
+  if (user && user.pass === p) {
+    err.textContent = '';
+    const splash = document.getElementById('splashLogin');
+    splash.classList.add('hiding');
+    document.getElementById('appRoot').classList.remove('locked');
+    setTimeout(() => { splash.style.display = 'none'; }, 400);
+
+    // Auto-login no sistema interno
+    currentUser = {...user, username: u};
+    updateNavAccount();
+    updateStats();
+    loadTheme();
+    showToast('Bem-vindo, ' + user.name.split(' ')[0] + '! 👋', 'success');
+  } else {
+    err.textContent = 'Usuário ou senha incorretos.';
+    document.getElementById('splashPass').value = '';
+    const card = document.querySelector('.splash-card');
+    card.style.animation = 'none';
+    card.offsetHeight;
+    card.style.animation = 'shake .4s ease';
+  }
+}
+
+(function() {
+  const style = document.createElement('style');
+  style.textContent = '@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}';
+  document.head.appendChild(style);
+})();
+
 </script>
 </div><!-- /appRoot -->
 </body>
