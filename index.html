@@ -2098,7 +2098,21 @@ function showPage(id) {
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if(id==='main') document.querySelectorAll('.nav-tab')[0].classList.add('active');
-  // pricing and account have no nav-tab highlight
+  // Se navegar para account já estando logado, mostra dashboard direto sem pedir login novamente
+  if(id==='account' && currentUser) {
+    document.getElementById('loginWrap').style.display='none';
+    const dash = document.getElementById('accountDash');
+    dash.classList.add('visible');
+    document.getElementById('accWelcome').textContent=`Olá, ${currentUser.name.split(' ')[0]} 👋`;
+    document.getElementById('accSubtitle').textContent=currentUser.isAdmin?'Painel de administração do BuscaPro.':'Gerencie sua assinatura e preferências.';
+    document.getElementById('ciDias').textContent=currentUser.dias;
+    document.getElementById('ciStatus').textContent=currentUser.dias>0?'Ativo':'Expirado';
+    document.getElementById('planBadge').className='plan-badge '+(currentUser.dias>0?'plan-active':'plan-inactive');
+    document.getElementById('planBadge').textContent=currentUser.dias>0?'● Ativo':'● Expirado';
+    document.getElementById('adminSection').className='admin-section'+(currentUser.isAdmin?' visible':'');
+    document.getElementById('clientSection').style.display=currentUser.isAdmin?'none':'block';
+    if(currentUser.isAdmin) { renderClients(); loadClientsFromFirebase(); }
+  }
 }
 
 function updateNavAccount() {
