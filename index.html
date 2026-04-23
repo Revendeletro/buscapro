@@ -439,16 +439,155 @@ td{padding:10px 12px;vertical-align:middle;white-space:nowrap;}
 .toast.success{border-color:rgba(0,184,107,.3);color:var(--green);}
 .toast.error{border-color:rgba(248,113,113,.3);color:#f87171;}
 
-/* Responsive */
-@media(max-width:840px){
-  .stats-bar{grid-template-columns:1fr 1fr 1fr;}
+/* ════════════════════════════════════════
+   RESPONSIVO — TABLET & MOBILE
+════════════════════════════════════════ */
+
+/* ── Tablet (≤900px) ── */
+@media(max-width:900px){
+  .stats-bar{grid-template-columns:1fr 1fr 1fr;gap:8px;padding:16px 16px 0;}
+  .search-section{padding:14px 16px 0;}
+  .filters-row{padding:10px 16px;gap:6px;}
+  .results-row{padding:8px 16px;}
+  .table-wrap{padding:0 16px 20px;}
+  .cmp-block{margin:12px 16px;}
+  .pagination{padding:12px 16px;}
+  .account-page{padding:20px 16px;}
+  .nav{padding:0 16px;gap:8px;}
+  .nav-sep{display:none;}
+  /* Dollar pill: esconde variação, mantém valor */
+  .dollar-chg{display:none;}
+  /* Sync: só o dot */
+  #syncLabel{display:none;}
+  .sync-pill{padding:4px 8px;}
+}
+
+/* ── Mobile (≤640px) ── */
+@media(max-width:640px){
+
+  /* NAV mobile */
+  .nav{height:52px;padding:0 14px;gap:6px;}
+  .logo{font-size:17px;}
+  .logo-dot{width:5px;height:5px;}
+  .nav-tabs{gap:1px;}
+  .nav-tab{padding:5px 10px;font-size:12px;}
+  /* Esconde botão account-btn no mobile (usa só a tab) */
+  .account-btn{display:none;}
+  /* Esconde dollar pill no mobile */
+  .dollar-pill{display:none;}
+
+  /* Stats: 3 cards em linha compacta */
+  .stats-bar{
+    grid-template-columns:repeat(3,1fr);
+    gap:6px;padding:12px 12px 0;
+  }
+  .stat-card{padding:12px 10px;}
+  .stat-val{font-size:20px;}
+  .stat-lbl{font-size:9px;letter-spacing:.3px;margin-bottom:4px;}
+  .stat-sub{display:none;}
+  .stat-icon{display:none;}
+
+  /* Search */
+  .search-section{padding:12px 12px 0;}
+  .search-input{font-size:14px;padding:12px 14px 12px 40px;}
+  .quick-filters{gap:5px;margin-top:8px;}
+  .qf-btn{padding:5px 11px;font-size:11px;}
+
+  /* Filters: grid 2 colunas no mobile */
+  .filters-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+    padding:10px 12px;
+    margin-top:10px;
+  }
+  .filter-group{display:flex;flex-direction:column;gap:3px;}
+  .filter-lbl{font-size:9px;}
+  select,.date-input{font-size:13px;padding:8px 10px;width:100%;}
+  /* Verified pill e clear btn: linha inteira */
+  .filter-spacer{display:none;}
+  .verified-pill{grid-column:1/2;justify-content:center;padding:8px;}
+  .clear-btn{grid-column:2/3;text-align:center;padding:8px;}
+  /* Ordenar: linha inteira */
+  .filters-row > div:last-child{
+    grid-column:1/-1;
+    display:flex;align-items:center;gap:8px;
+  }
+  .filters-row > div:last-child select{flex:1;}
+
+  /* Results row */
+  .results-row{
+    padding:8px 12px;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+  }
+
+  /* Compare block mobile: scroll horizontal */
+  .cmp-block{margin:10px 12px;}
+  .cmp-head{padding:8px 12px;flex-wrap:wrap;gap:4px;}
+  .cmp-title{font-size:10px;}
+  .cmp-cards{
+    display:flex;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    gap:0;
+  }
+  .cmp-cards::-webkit-scrollbar{height:3px;}
+  .cmp-cards::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:99px;}
+  .cc{
+    min-width:150px;
+    flex-shrink:0;
+    scroll-snap-align:start;
+    border-right:1px solid var(--border);
+    border-bottom:none;
+  }
+
+  /* Table: scroll horizontal com células compactas */
+  .table-wrap{padding:0 12px 16px;-webkit-overflow-scrolling:touch;}
+  table{min-width:560px;}
+  td,thead th{padding:8px 8px;font-size:11px;}
+  .prod-name{font-size:12px;}
+  .prod-obs{display:none;}
+  .sup-loc{display:none;}
+  .price-val{font-size:13px;}
+  /* Esconde colunas menos importantes no mobile */
+  table th:nth-child(4),table td:nth-child(4),  /* Cor */
+  table th:nth-child(6),table td:nth-child(6)   /* Região */
+  {display:none;}
+
+  /* WA button compacto */
+  .wa-btn{padding:5px 8px;font-size:10px;}
+  .wa-btn svg{width:10px;height:10px;}
+
+  /* Pagination */
+  .pagination{padding:10px 12px;gap:3px;flex-wrap:wrap;}
+  .pg-btn{min-width:28px;height:28px;font-size:11px;}
+  .pg-info{font-size:10px;margin:0 4px;}
+
+  /* Account page */
+  .account-page{padding:14px 12px;}
+  .login-card{padding:28px 20px;}
+  .login-title{font-size:19px;}
   .client-info{grid-template-columns:1fr 1fr;}
   .admin-stats-mini{grid-template-columns:1fr 1fr;}
+  .acc-section{padding:18px 16px;}
+  .drop-zone{padding:24px 16px;}
+
+  /* Toast */
+  .toast{
+    bottom:14px;right:14px;left:14px;
+    font-size:12px;padding:10px 14px;
+  }
 }
-@media(max-width:580px){
-  .stats-bar{grid-template-columns:1fr;}
-  .nav{padding:0 16px;}
-  .search-section,.filters-row,.table-wrap,.results-row,.account-page{padding-left:16px;padding-right:16px;}
+
+/* ── Muito pequeno (≤380px) ── */
+@media(max-width:380px){
+  .stats-bar{grid-template-columns:1fr 1fr;gap:5px;}
+  .stat-card:last-child{grid-column:1/-1;}
+  .nav-tab{padding:4px 8px;font-size:11px;}
+  .logo{font-size:15px;}
 }
 </style>
 </head>
@@ -1330,10 +1469,11 @@ let fbReady = false;
 
 function setSyncStatus(state, label) {
   const pill = document.getElementById('syncPill');
-  const dot  = document.getElementById('syncDot');
   const lbl  = document.getElementById('syncLabel');
+  // Sempre mostra só o estado, nunca quantidade de produtos
+  const labels = { online: 'Online', syncing: 'Sincronizando', error: 'Erro', '': 'Config pendente' };
   pill.className = 'sync-pill ' + state;
-  lbl.textContent = label;
+  lbl.textContent = labels[state] || label;
 }
 
 function initFirebase() {
