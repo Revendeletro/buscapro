@@ -38,6 +38,74 @@
   --shadow: 0 4px 24px rgba(0,0,0,.4);
   --shadow-lg: 0 16px 56px rgba(0,0,0,.65);
 }
+
+/* ── LIGHT THEME ── */
+body.theme-light {
+  --bg: #f4f4f8;
+  --surface: #ffffff;
+  --surface-2: #f0f0f5;
+  --surface-3: #e4e4ec;
+  --border: rgba(0,0,0,.07);
+  --border-2: rgba(0,0,0,.12);
+  --text: #111118;
+  --text-2: #44445a;
+  --text-3: #8888a0;
+  --shadow: 0 4px 24px rgba(0,0,0,.10);
+  --shadow-lg: 0 16px 56px rgba(0,0,0,.15);
+}
+body.theme-light .nav {
+  background: rgba(244,244,248,.96);
+}
+body.theme-light .search-input {
+  background: #fff;
+  color: var(--text);
+}
+body.theme-light select,
+body.theme-light .date-input {
+  background: #fff;
+  color: var(--text);
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238888a0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+body.theme-light .autocomplete-dropdown {
+  background: #fff;
+}
+body.theme-light tbody tr {
+  background: #fff;
+}
+body.theme-light tbody tr:hover {
+  background: var(--surface-2);
+}
+body.theme-light .avatar-menu {
+  background: #fff;
+}
+body.theme-light .modal-box {
+  background: #fff;
+}
+body.theme-light .plan-card {
+  background: #fff;
+}
+/* Theme toggle button styles */
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border-2);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: all .18s;
+  flex: 1;
+  min-width: 120px;
+}
+.theme-option:hover { border-color: var(--red); }
+.theme-option.selected { border-color: var(--red); background: var(--red-soft); }
+.theme-option-icon { font-size: 26px; flex-shrink: 0; }
+.theme-option-label { font-size: 13px; font-weight: 600; color: var(--text); }
+.theme-option-desc { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+.theme-options-row { display: flex; gap: 10px; flex-wrap: wrap; }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;color:var(--text);font-size:14px;line-height:1.5;}
@@ -1235,6 +1303,28 @@ td{padding:10px 12px;vertical-align:middle;white-space:nowrap;}
         <button class="renew-btn">🔄 Renovar Plano</button>
       </div>
 
+      <!-- THEME SECTION (shown for all users) -->
+      <div class="acc-section" id="themeSection">
+        <div class="acc-section-title">🎨 Tema</div>
+        <div class="acc-section-sub">Escolha a aparência da plataforma.</div>
+        <div class="theme-options-row">
+          <button class="theme-option" id="themeDark" onclick="setTheme('dark')">
+            <span class="theme-option-icon">🌙</span>
+            <div>
+              <div class="theme-option-label">Escuro</div>
+              <div class="theme-option-desc">Fundo escuro · padrão</div>
+            </div>
+          </button>
+          <button class="theme-option" id="themeLight" onclick="setTheme('light')">
+            <span class="theme-option-icon">☀️</span>
+            <div>
+              <div class="theme-option-label">Claro</div>
+              <div class="theme-option-desc">Fundo branco · clean</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
       <!-- ADMIN SECTION (only admin) -->
       <div class="admin-section" id="adminSection">
 
@@ -1913,6 +2003,9 @@ function applyFilters(){
     populateFilters(ALL_DATA);
   }
 
+  // Exact product name match: if query matches a known product name exactly, filter only that product
+  const exactProd = q ? ALL_DATA.find(d => d.p.toLowerCase() === q) : null;
+
   filtered=ALL_DATA.filter(d=>{
     if(verifiedOnly&&d.v!=='SIM')return false;
     if(tipoFilter!=='todos'&&d.t!==tipoFilter)return false;
@@ -1924,8 +2017,21 @@ function applyFilters(){
     if(local&&d.l!==local)return false;
     if(dateDay&&d.date&&d.date!==dateDay)return false;
     if(q){
-      const hay=`${d.p} ${d.f} ${d.l} ${d.s} ${d.c} ${d.cat} ${d.t} ${d.r} ${d.obs}`.toLowerCase();
-      if(!hay.includes(q))return false;
+      if(exactProd){
+        // Exact match mode: only show this exact product name
+        if(d.p.toLowerCase()!==q)return false;
+      } else {
+        // Partial match: search across all fields but use word-aware logic
+        // Split query into tokens and require ALL tokens to match product name
+        const tokens = q.split(/\s+/).filter(Boolean);
+        const prodLow = d.p.toLowerCase();
+        const hayAll = `${d.p} ${d.f} ${d.l} ${d.s} ${d.c} ${d.cat} ${d.t} ${d.r} ${d.obs}`.toLowerCase();
+        // All tokens must appear in the product name (strict product search)
+        const allInProd = tokens.every(t => prodLow.includes(t));
+        // Fallback: all tokens appear somewhere in full hay
+        const allInHay = tokens.every(t => hayAll.includes(t));
+        if(!allInProd && !allInHay) return false;
+      }
     }
     return true;
   });
@@ -2214,6 +2320,7 @@ function doLogin(){
     document.getElementById('clientSection').style.display=user.isAdmin?'none':'block';
     updateNavAccount();
     updateStats();
+    loadTheme(); // refresh theme button selection state
     showToast(`Bem-vindo, ${user.name.split(' ')[0]}!`,'success');
   } else {
     err.textContent='Usuário ou senha incorretos.';
@@ -2323,6 +2430,23 @@ function processXLSX(file){
   reader.readAsArrayBuffer(file);
 }
 function showResult(type,msg){const el=document.getElementById('uploadResult');el.className='upload-result '+type;el.textContent=msg;el.style.display='block';}
+
+// ═══════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════
+function setTheme(t) {
+  document.body.classList.toggle('theme-light', t === 'light');
+  localStorage.setItem('buscapro_theme', t);
+  const dark = document.getElementById('themeDark');
+  const light = document.getElementById('themeLight');
+  if(dark) dark.classList.toggle('selected', t === 'dark');
+  if(light) light.classList.toggle('selected', t === 'light');
+}
+function loadTheme() {
+  const saved = localStorage.getItem('buscapro_theme') || 'dark';
+  setTheme(saved);
+}
+loadTheme();
 
 // ═══════════════════════════════════════════
 // TOAST
